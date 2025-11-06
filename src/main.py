@@ -1,6 +1,6 @@
 from pprint import pprint
 
-from weather_environment import (
+from .weather_environment import (
     normalize_environment_data,
     get_environment_for_points,
     get_hourly_environment_timeseries,
