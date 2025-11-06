@@ -1,10 +1,11 @@
 import os
 from datetime import datetime, timezone
+from typing import List, Dict, Any
 
 import requests
 from dotenv import load_dotenv
 
-# Load environment variables
+# Load environment variables from .env file
 load_dotenv()
 
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
@@ -13,6 +14,7 @@ if not OPENWEATHER_API_KEY:
 
 BASE_WEATHER_URL = "https://api.openweathermap.org/data/2.5/weather"
 AIR_POLLUTION_URL = "https://api.openweathermap.org/data/2.5/air_pollution"
+FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"  # 5-day / 3-hour forecast
 
 
 def get_current_weather(lat: float, lon: float) -> dict:
@@ -47,9 +49,89 @@ def get_current_air_quality(lat: float, lon: float) -> dict:
     return resp.json()
 
 
+def get_hourly_forecast(lat: float, lon: float) -> dict:
+    """
+    Fetch weather forecast using OpenWeather 5-day / 3-hour forecast API.
+
+    """
+    params = {
+        "lat": lat,
+        "lon": lon,
+        "appid": OPENWEATHER_API_KEY,
+        "units": "metric",
+        "lang": "en",
+    }
+    resp = requests.get(FORECAST_URL, params=params, timeout=10)
+    if resp.status_code != 200:
+        raise RuntimeError(
+            f"Forecast request failed: {resp.status_code} {resp.text}"
+        )
+    return resp.json()
+
+
+def get_hourly_environment_timeseries(
+    lat: float, lon: float, hours: int = 24, name: str | None = None
+) -> List[Dict[str, Any]]:
+    """
+    Return a list of environment datapoints for the next `hours` hours.
+
+    Uses the 5-day / 3-hour forecast endpoint:
+    - each entry is a 3-hour step
+    - trim the list to approximately the requested number of hours
+
+    Each element contains:
+    - timestamp
+    - location
+    - metrics (temperature, humidity, pressure)
+    """
+    forecast = get_hourly_forecast(lat, lon)
+
+    # "list" contains 3-hourly forecast entries
+    forecast_list = forecast.get("list", [])
+
+    # (1 entry = 3 hours)
+    if hours <= 0:
+        hours = 1
+    max_entries = max(1, hours // 3 + (1 if hours % 3 != 0 else 0))
+    forecast_list = forecast_list[:max_entries]
+
+    results: List[Dict[str, Any]] = []
+
+    for entry in forecast_list:
+        dt_unix = entry.get("dt")
+        main = entry.get("main", {})
+
+        temp = main.get("temp")
+        humidity = main.get("humidity")
+        pressure = main.get("pressure")
+
+        # Convert to ISO timestamp in UTC
+        ts = datetime.fromtimestamp(dt_unix, tz=timezone.utc).isoformat()
+
+        results.append(
+            {
+                "category": "environment",
+                "source": "openweather",
+                "location": {
+                    "lat": lat,
+                    "lon": lon,
+                    "name": name,
+                },
+                "timestamp": ts,
+                "metrics": {
+                    "temperature": temp,
+                    "humidity": humidity,
+                    "pressure": pressure,
+                },
+            }
+        )
+
+    return results
+
+
 def normalize_environment_data(lat: float, lon: float, name: str | None = None) -> dict:
     """
-    Combine weather and air quality data into a unified format
+    Combine current weather and air quality data into a unified format
     ready for visualization on the map.
     """
     weather = get_current_weather(lat, lon)
@@ -67,26 +149,64 @@ def normalize_environment_data(lat: float, lon: float, name: str | None = None) 
     aqi = air_item.get("main", {}).get("aqi")
 
     return {
-        "category": "environment", # moduł pogoda + smog
+        "category": "environment",  # weather + air quality
         "source": "openweather",
         "location": {
-            "lat": lat, # szerokosc geograficzna
-            "lon": lon, # dlugosc geograficzna
+            "lat": lat,
+            "lon": lon,
             "name": name or weather.get("name"),
         },
         "timestamp": ts,
         "metrics": {
-            "temperature": main.get("temp"), # temperatura w stopniach Celsjusza
-            "humidity": main.get("humidity"), # wilgotnosc w %
-            "pressure": main.get("pressure"), # cisnienie w hPa
-            "rain_1h": rain.get("1h", 0.0), # opad deszczu z ostatniej godziny (mm, jesli w ogole jest w danych; inaczej 0)
-            "snow_1h": snow.get("1h", 0.0), # opad sniegu z ostatniej godziny (mm; domyslnie 0),
-            "pm25": components.get("pm2_5"), # stezenie pylu PM2.5 (µg/m³)
-            "pm10": components.get("pm10"), # stezenie pylu PM10 (µg/m³),
-            "aqi": aqi, # indeks jakosci powietrza 1–5 (1 = very good, 5 = very bad).
+            "temperature": main.get("temp"),       # °C
+            "humidity": main.get("humidity"),      # %
+            "pressure": main.get("pressure"),      # hPa
+            "rain_1h": rain.get("1h", 0.0),        # mm in last hour
+            "snow_1h": snow.get("1h", 0.0),        # mm in last hour
+            "pm25": components.get("pm2_5"),       # µg/m³
+            "pm10": components.get("pm10"),        # µg/m³
+            "aqi": aqi,                            # 1 (good) – 5 (very bad)
         },
         "raw": {
             "weather": weather,
             "air": air,
         },
     }
+
+
+def get_environment_for_points(points: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Fetch environment data (weather + air quality) for multiple points.
+
+    Input example:
+    [
+        {"lat": 52.2297, "lon": 21.0122, "name": "Warsaw"},
+        {"lat": 50.0647, "lon": 19.9450, "name": "Krakow"},
+    ]
+
+    Output: list of normalized dictionaries (same format as normalize_environment_data).
+    """
+    results: List[Dict[str, Any]] = []
+
+    for point in points:
+        lat = point["lat"]
+        lon = point["lon"]
+        name = point.get("name")
+        try:
+            data = normalize_environment_data(lat, lon, name=name)
+            results.append(data)
+        except Exception as e:
+            results.append(
+                {
+                    "category": "environment",
+                    "source": "openweather",
+                    "location": {
+                        "lat": lat,
+                        "lon": lon,
+                        "name": name,
+                    },
+                    "error": str(e),
+                }
+            )
+
+    return results
