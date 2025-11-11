@@ -361,3 +361,80 @@ http://127.0.0.1:8000/docs
 - fastapi
 - uvicorn
 
+
+
+# Traffic Flow Module
+Module for collecting and standardizing real-time traffic flow data using the TomTom Traffic API.
+Provides current traffic information such as average speed, free-flow speed for single or multiple geographic points. Ideal for map visualization.
+
+## Features
+- Fetch real-time traffic flow from TomTom Traffic API
+- Normalize and standarize responses to unified JSON format
+- Batch requests support for multiple coordinates
+- Provides confidence metric indicating data reliability
+- Includes FastAPI backend with REST endpoints
+
+## Structure
+src/traffic/
+- traffic.py
+- main_traffic.py
+- server_traffic.py
+
+## Endpoints
+/traffic - GET - get current traffic flow for a single point  
+/traffic/batch - POST - get current traffic flow for multiple points  
+
+## Example JSON
+```json
+{
+  "category": "traffic",
+  "location": {
+    "lat": 53.1325,
+    "lon": 23.1688,
+    "name": "Bialystok"
+  },
+  "metrics": {
+    "confidence": 1,
+    "current_speed": 32,
+    "free_flow_speed": 32
+  },
+  "source": "tomtom",
+  "timestamp": "2025-11-11T20:18:11.687366+00:00"
+}
+```
+
+## How to run
+
+### 1. Create and activate virtual environment
+```bash
+python -m venv venv
+venv\Scripts\Activate.ps1
+```
+
+### 2. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Add .env file with
+```bash
+TOMTOM_API_KEY=your_api_key
+```
+
+### 4. Run server
+```bash
+uvicorn src.server:app --reload
+```
+
+### 5. Open documentation
+```bash
+http://127.0.0.1:8000/docs
+```
+
+
+## Dependencies
+- Python 3.10+
+- requests
+- python-dotenv
+- fastapi
+- uvicorn
