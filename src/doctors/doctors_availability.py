@@ -105,3 +105,53 @@ def get_doctor_availability(lat: float, lon: float, service_name: str, urgent: b
         },
         "results": results,
     }
+
+def get_coordinates_from_address(address: str) -> Dict[str, float]:
+    """Geokodowanie adresu na współrzędne."""
+    if not address:
+        return {"lat": None, "lon": None}
+    params = {
+        "q": address,
+        "format": "json",
+        "limit": 1
+    }
+    resp = requests.get("https://nominatim.openstreetmap.org/search", params=params, headers=HEADERS, timeout=10)
+    if resp.status_code != 200 or not resp.json():
+        return {"lat": None, "lon": None}
+    data = resp.json()[0]
+    return {"lat": float(data["lat"]), "lon": float(data["lon"])}
+
+def get_doctor_coordinates(lat: float, lon: float, service_name: str, urgent: bool = False) -> Dict[str, Any]:
+    """Zwraca współrzędne placówek i daty kolejek (tylko przyszłe lub dzisiejsze)."""
+    data = get_doctor_availability(lat, lon, service_name, urgent)
+    today = datetime.utcnow().date()
+
+    results = []
+    for item in data["results"]:
+        queue_date = item.get("queue_date")
+        if not queue_date:
+            continue
+
+        try:
+            q_date = datetime.fromisoformat(queue_date).date()
+        except ValueError:
+            continue
+
+        if q_date < today:
+            continue
+
+        address = item.get("address") or item.get("place") or item.get("locality")
+        coords = get_coordinates_from_address(address)
+
+        results.append({
+            "provider": item.get("provider"),
+            "service": item.get("service"),
+            "lat": coords["lat"],
+            "lon": coords["lon"],
+            "queue_date": queue_date,
+        })
+
+    return {
+        "query": data["query"],
+        "results": results
+    }
