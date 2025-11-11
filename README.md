@@ -109,8 +109,9 @@ src/doctors/
 
 ## Endpoints
 /doctors - GET - list of up to 10 nearest facilities for given specialization and location
+/doctorsCoordinates - GET - list of up to 10 nearest facilities for given specialization and location (latitude and longitude)
 
-## Example JSON
+## Example JSON for /doctors GET endpoint
 ```json
 {
   "query": {
@@ -247,6 +248,88 @@ src/doctors/
   ]
 }
 ```
+
+## Example JSON for /doctorsCoordinates GET endpoint
+```json
+{
+  "query": {
+    "service": "kardiolog",
+    "urgent": true,
+    "lat": 52.2297,
+    "lon": 21.0122,
+    "city": "WARSZAWA",
+    "province": "MAZOWIECKIE",
+    "province_code": "07",
+    "timestamp": "2025-11-11T12:24:29.656007"
+  },
+  "results": [
+    {
+      "provider": "SAMODZIELNY PUBLICZNY SZPITAL KLINICZNY IM. PROF. WITOLDA ORŁOWSKIEGO CENTRUM MEDYCZNEGO KSZTAŁCENIA PODYPLOMOWEGO W WARSZAWIE",
+      "service": "ODDZIAŁ KARDIOLOGICZNY",
+      "lat": 52.2295796,
+      "lon": 21.0325283,
+      "queue_date": "2025-11-14"
+    },
+    {
+      "provider": "PAŃSTWOWY INSTYTUT MEDYCZNY MINISTERSTWA SPRAW WEWNĘTRZNYCH I ADMINISTRACJI",
+      "service": "ŚWIADCZENIA Z ZAKRESU KARDIOLOGII",
+      "lat": 52.199029,
+      "lon": 20.9983574,
+      "queue_date": "2025-11-14"
+    },
+    {
+      "provider": "PAŃSTWOWY INSTYTUT MEDYCZNY MINISTERSTWA SPRAW WEWNĘTRZNYCH I ADMINISTRACJI",
+      "service": "ŚWIADCZENIA Z ZAKRESU KARDIOLOGII",
+      "lat": 52.199029,
+      "lon": 20.9983574,
+      "queue_date": "2025-11-14"
+    },
+    {
+      "provider": "DARIUSZ BOJANOWSKI ORTOPEDA",
+      "service": "ŚWIADCZENIA Z ZAKRESU KARDIOLOGII",
+      "lat": 52.3410659,
+      "lon": 21.0277379,
+      "queue_date": "2025-11-17"
+    },
+    {
+      "provider": "NIEPUBLICZNY ZAKŁAD OPIEKI  ZDROWOTNEJ \"SANA\" SP. Z O.O. SP.K",
+      "service": "ŚWIADCZENIA Z ZAKRESU KARDIOLOGII",
+      "lat": 52.2108772,
+      "lon": 21.0101505,
+      "queue_date": "2025-11-18"
+    },
+    {
+      "provider": "SAMODZIELNY ZESPÓŁ PUBLICZNYCH ZAKŁADÓW LECZNICTWA OTWARTEGO WARSZAWA-MOKOTÓW",
+      "service": "ŚWIADCZENIA Z ZAKRESU KARDIOLOGII",
+      "lat": 52.170328,
+      "lon": 21.0041512,
+      "queue_date": "2025-11-24"
+    },
+    {
+      "provider": "GRUPA MEDYCZNA VERTIMED SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+      "service": "ŚWIADCZENIA Z ZAKRESU KARDIOLOGII",
+      "lat": 52.1333607,
+      "lon": 21.0681113,
+      "queue_date": "2025-11-24"
+    },
+    {
+      "provider": "SAMODZIELNY  ZESPÓŁ PUBLICZNYCH  ZAKŁADÓW  LECZNICTWA OTWARTEGO WARSZAWA WESOŁA",
+      "service": "ŚWIADCZENIA Z ZAKRESU KARDIOLOGII",
+      "lat": 51.7720507,
+      "lon": 19.4633428,
+      "queue_date": "2025-11-24"
+    },
+    {
+      "provider": "SZPITAL BIELAŃSKI IM.KS.JERZEGO POPIEŁUSZKI SAMODZIELNY PUBLICZNY ZAKŁAD OPIEKI ZDROWOTNEJ",
+      "service": "ŚWIADCZENIA Z ZAKRESU KARDIOLOGII",
+      "lat": 52.2865334,
+      "lon": 20.9503055,
+      "queue_date": "2025-11-25"
+    }
+  ]
+}
+```
+
 ## How to run
 
 ### 1. Create and activate virtual environment
