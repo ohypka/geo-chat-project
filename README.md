@@ -438,3 +438,92 @@ http://127.0.0.1:8000/docs
 - python-dotenv
 - fastapi
 - uvicorn
+
+# Bikes Availability Module (Nextbike)
+Module for collecting and standardizing real-time data on the availability of bikes and free racks from the Nextbike API.
+
+Provides current information on stations, available bikes, and their types (e.g., standard, electric) for Polish cities. Ideal for map visualization.
+
+---
+
+## Features
+- Fetch real-time bike availability data from Nextbike API
+- Filter data to include only Poland (countries=pl)
+- Normalize station data to a unified JSON format
+- Differentiates between local systems/brands (e.g., Veturilo, Chełmski Rower)
+- Includes FastAPI backend with a dedicated /nextbike endpoint
+
+## Structure
+src/bikes/
+- nextbike.py - data fetching, normalization, and handling of ID mapping
+- main_nextbike.py - example usage and local tests
+- server_nextbike.py - FastAPI backend with API endpoint
+
+## Endpoints
+/nextbike - GET - get the current status of all Nextbike stations in Poland
+
+## Example JSON for /doctors GET endpoint
+```json
+{
+  "category": "bikeshare",
+  "source": "nextbike",
+  "location": {
+    "lat": 52.2297,
+    "lon": 21.0122,
+    "name": "Rondo Dmowskiego",
+    "city": "Warsaw",
+    "country": "Poland"
+  },
+  "timestamp": "2025-11-14T18:30:00.000000+00:00",
+  "metrics": {
+    "bikes_available": 10,
+    "docks_available": 5,
+    "rental_key": 37201,
+    "spot_id": 123456,
+    "system_brand": "Veturilo",
+    "available_bike_types": [
+      {
+        "type_name": "Typ roweru: ID 71",
+        "available_count": 8
+      },
+      {
+        "type_name": "Typ roweru: ID 229",
+        "available_count": 2
+      }
+    ]
+  }
+}
+```
+
+## Special Note on Bike Types (ID Mapping)
+The primary Nextbike API endpoint (/maps/nextbike-official.json) provides bike types only as numeric IDs (e.g., ID 71) in the available_bike_types metric. Obtaining the human-readable names (e.g., "Standard Bike") requires calling a separate, authenticated API endpoint (/api/getBikeTypes.xml), co-located with transactional APIs. Access to this mapping requires a properly authorized NEXTBIKE_API_KEY. The current module logic correctly aggregates and returns counts by ID, awaiting external mapping.
+
+## How to run
+### 1. Create and activate virtual environment
+```bash
+python -m venv venv
+venv\Scripts\Activate.ps1
+```
+
+### 2. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Run server
+```bash
+uvicorn src.server:app --reload
+```
+
+### 4. Open documentation
+```bash
+http://127.0.0.1:8000/docs
+```
+
+## Dependencies
+- Python 3.10+
+- requests
+- python-dotenv
+- fastapi
+- uvicorn
+- xml.etree.ElementTree
