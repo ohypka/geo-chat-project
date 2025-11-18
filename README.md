@@ -527,3 +527,65 @@ http://127.0.0.1:8000/docs
 - fastapi
 - uvicorn
 - xml.etree.ElementTree
+
+
+Map Visualization Component (Next.js + Leaflet)
+===============================================
+
+Client-side component for visualizing multiple real-time datasets on an interactive map using **Leaflet** in a **Next.js** project. Combines weather, air quality, doctors availability, traffic, and bike share stations into one map interface.
+
+Features
+--------
+
+*   Renders **Weather** (temperature, humidity, pressure, PM2.5/PM10, AQI) as colored circle markers
+    
+*   Renders **Doctors** locations with detailed popups including service, waiting days, and queue dates
+    
+*   Renders **Traffic** flow with color-coded markers indicating congestion level (green = smooth, orange = slow, red = heavy traffic)
+    
+*   Renders **Bike Share** stations with availability of bikes and docks, color-coded by number of available bikes
+    
+*   Supports **layer control** to toggle visibility of datasets
+    
+*   Uses dynamic JSON input (standardized format) for all data layers
+    
+How to Run
+----------
+
+1.  **Install dependencies** (if you haven’t already):
+    
+```bash
+npm install  
+# or  
+yarn install 
+```
+
+1.  **Start the Next.js development server**:
+    
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+1.  **Open your browser** and navigate to:
+    
+```bash
+http://localhost:3000/component/Map
+```
+
+*   This will render the **MapComponent**, showing all available layers: **Weather**, **Doctors**, **Traffic**, and **Bikes**.
+    
+*   Use the **layer control** in the top-right corner of the map to toggle visibility of different datasets.
+    
+*   Any changes to the component or datasets will automatically refresh the page in **development mode**.
+    
+
+Dependencies
+------------
+
+*   React 18+ / Next.js 13+
+    
+*   Leaflet 1.9+
+    
+*   leaflet.css (imported in MapComponent)
