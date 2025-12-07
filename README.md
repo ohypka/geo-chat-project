@@ -8,7 +8,7 @@ Geo Chat provides a plugin-based architecture that allows you to:
 - **Use built-in providers** for weather, healthcare, and more
 - **Process data in batches** with consistent error handling
 
-## 🎯 Key Features
+## Key Features
 
 - **Universal Framework**: Create providers for any API with location-based data
 - **Unified Format**: All providers return data in the same standardized format
@@ -17,7 +17,7 @@ Geo Chat provides a plugin-based architecture that allows you to:
 - **Built-in Providers**: Weather, doctors availability, and more
 - **Type Safe**: Built with Pydantic for data validation
 
-## 📦 Installation
+## Installation
 
 ```bash
 # Install the package
@@ -27,7 +27,7 @@ pip install -e .
 pip install -e ".[api]"
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Using Built-in Providers
 
@@ -80,7 +80,7 @@ data = provider.get_data(Location(lat=52.2297, lon=21.0122))
 
 See [docs/CREATING_PROVIDERS.md](docs/CREATING_PROVIDERS.md) for complete guide.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 geo-chat-project/
@@ -102,20 +102,20 @@ geo-chat-project/
 └── src/                  # Legacy code (for API servers)
 ```
 
-## 📚 Documentation
+## Documentation
 
 - **[Creating Providers](docs/CREATING_PROVIDERS.md)** - Complete guide to creating custom providers
 - **[Installation Guide](INSTALLATION.md)** - Detailed installation instructions
 - **[Examples](examples/)** - Working code examples
 
-## 🔌 Built-in Providers
+## Built-in Providers
 
 - **Weather** (`weather`) - OpenWeatherMap API for weather and air quality
 - **Doctors** (`doctors`) - NFZ API for Polish healthcare availability
 
 More providers coming soon!
 
-## 💡 Why This Framework?
+## Why This Framework?
 
 Instead of writing custom code for each API, you can:
 
