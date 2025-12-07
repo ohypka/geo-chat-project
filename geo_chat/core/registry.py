@@ -32,7 +32,6 @@ class ProviderRegistry:
         def decorator(provider_class: Type[BaseProvider]):
             provider_name = name or provider_class.__name__.lower().replace("provider", "")
             
-            # Set category if provided
             if category:
                 original_init = provider_class.__init__
                 def new_init(self, *args, **kwargs):
@@ -81,7 +80,6 @@ class ProviderRegistry:
         """
         providers = []
         for name, provider_class in cls._providers.items():
-            # Create temporary instance to check category
             try:
                 instance = provider_class()
                 if instance.category == category:
@@ -97,10 +95,8 @@ class ProviderRegistry:
         cls._instances.clear()
 
 
-# Global registry instance
 registry = ProviderRegistry()
 
-# Convenience decorator
 def register_provider(name: Optional[str] = None, category: Optional[str] = None):
     """Convenience decorator for registering providers."""
     return ProviderRegistry.register(name=name, category=category)

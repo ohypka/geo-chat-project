@@ -1,9 +1,3 @@
-"""
-Base classes for geo-chat providers.
-
-All data providers must inherit from BaseProvider and implement
-the required methods to fetch and normalize data.
-"""
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional
 from .models import DataPoint, Location, BatchRequest, BatchResponse
@@ -115,7 +109,6 @@ class BaseProvider(ABC):
             raw_data = self.fetch(location, **options)
             return self.normalize(raw_data, location)
         except Exception as e:
-            # Return error data point instead of raising
             return DataPoint(
                 category=self.category,
                 source=self.name,
@@ -140,7 +133,6 @@ class BaseProvider(ABC):
         
         for location in request.points:
             try:
-                # Merge request options with provider-specific options
                 options = request.options or {}
                 data_point = self.get_data(location, **options)
                 results.append(data_point)
@@ -155,7 +147,6 @@ class BaseProvider(ABC):
                     "location": location.dict(),
                     "error": str(e)
                 })
-                # Add error data point
                 results.append(DataPoint(
                     category=self.category,
                     source=self.name,

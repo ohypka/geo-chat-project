@@ -11,21 +11,15 @@ from geo_chat import (
     get_doctor_coordinates,
 )
 
-# Example 1: Get environment data (weather + air quality)
 def example_environment():
     """Example: Fetch weather and air quality data."""
-    # Option 1: Using environment variable OPENWEATHER_API_KEY
-    # Make sure you have OPENWEATHER_API_KEY in your .env file or environment
-    
-    # Option 2: Pass API key directly
     api_key = os.getenv("OPENWEATHER_API_KEY")
     
-    # Warsaw coordinates
     data = normalize_environment_data(
         lat=52.2297,
         lon=21.0122,
         name="Warsaw",
-        api_key=api_key,  # Optional if env var is set
+        api_key=api_key,  
     )
     
     print("Environment Data:")
@@ -35,11 +29,8 @@ def example_environment():
     print(f"AQI: {data['metrics']['aqi']}")
     return data
 
-
-# Example 2: Get doctors availability
 def example_doctors():
     """Example: Fetch doctors availability from NFZ API."""
-    # Warsaw coordinates
     data = get_doctor_availability(
         lat=52.2297,
         lon=21.0122,
@@ -58,7 +49,6 @@ def example_doctors():
     return data
 
 
-# Example 3: Get doctors with coordinates
 def example_doctors_coordinates():
     """Example: Fetch doctors availability with coordinates."""
     data = get_doctor_coordinates(

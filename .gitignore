@@ -11,7 +11,6 @@ __pycache__/
 *.pyd
 .Python
 
-# Build artifacts
 build/
 dist/
 *.egg-info/
@@ -20,7 +19,6 @@ dist/
 .vscode/
 .idea/
 
-# Testing
 .pytest_cache/
 .coverage
 htmlcov/

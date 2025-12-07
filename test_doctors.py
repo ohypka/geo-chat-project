@@ -11,12 +11,12 @@ print()
 print("1. Tworzenie providera...")
 try:
     provider = create_provider("doctors")
-    print("✓ Provider 'doctors' utworzony pomyślnie")
+    print("Provider 'doctors' utworzony pomyślnie")
     print(f"  Typ: {type(provider).__name__}")
     print(f"  Kategoria: {provider.category}")
     print(f"  Źródło: {provider.name}")
 except Exception as e:
-    print(f"✗ Błąd: {e}")
+    print(f"Błąd: {e}")
     exit(1)
 print()
 
@@ -26,7 +26,7 @@ location = Location(
     lon=21.0122,
     name="Warszawa"
 )
-print(f"✓ Lokalizacja: {location.name}")
+print(f"Lokalizacja: {location.name}")
 print(f"  Współrzędne: ({location.lat}, {location.lon})")
 print()
 
@@ -84,7 +84,6 @@ try:
                 print(f"  Liczba osób w kolejce: {awaiting}")
         print()
         
-        # Szczegóły placówek z metadata
         if data.metadata and "results" in data.metadata:
             results = data.metadata["results"]
             print(f"Szczegóły placówek ({len(results)} pierwszych):")
@@ -100,7 +99,6 @@ try:
                 print(f"   Osoby w kolejce: {facility.get('awaiting', 'N/A')}")
                 print(f"   Data kolejki: {facility.get('queue_date', 'N/A')}")
         
-        # Pokaż też surowe dane (opcjonalnie)
         print()
         print("=" * 70)
         print("Struktura danych (DataPoint):")
@@ -113,7 +111,7 @@ try:
         print(f"  has raw data: {data.raw is not None}")
         
 except Exception as e:
-    print(f"✗ Błąd podczas pobierania danych: {e}")
+    print(f"Błąd podczas pobierania danych: {e}")
     import traceback
     traceback.print_exc()
     exit(1)

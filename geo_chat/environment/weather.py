@@ -10,13 +10,11 @@ from typing import List, Dict, Any, Optional
 
 import requests
 from dotenv import load_dotenv
-
-# Load environment variables (optional - can be configured via function parameters)
 load_dotenv()
 
 BASE_WEATHER_URL = "https://api.openweathermap.org/data/2.5/weather"
 AIR_POLLUTION_URL = "https://api.openweathermap.org/data/2.5/air_pollution"
-FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"  # 5-day / 3-hour forecast
+FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"  
 
 
 def get_current_weather(
@@ -170,10 +168,8 @@ def get_hourly_environment_timeseries(
     """
     forecast = get_hourly_forecast(lat, lon, api_key=api_key)
 
-    # "list" contains 3-hourly forecast entries
     forecast_list = forecast.get("list", [])
 
-    # (1 entry = 3 hours)
     if hours <= 0:
         hours = 1
     max_entries = max(1, hours // 3 + (1 if hours % 3 != 0 else 0))
@@ -189,7 +185,6 @@ def get_hourly_environment_timeseries(
         humidity = main.get("humidity")
         pressure = main.get("pressure")
 
-        # Convert to ISO timestamp in UTC
         ts = datetime.fromtimestamp(dt_unix, tz=timezone.utc).isoformat()
 
         results.append(
@@ -253,7 +248,7 @@ def normalize_environment_data(
     aqi = air_item.get("main", {}).get("aqi")
 
     return {
-        "category": "environment",  # weather + air quality
+        "category": "environment", 
         "source": "openweather",
         "location": {
             "lat": lat,
@@ -262,14 +257,14 @@ def normalize_environment_data(
         },
         "timestamp": ts,
         "metrics": {
-            "temperature": main.get("temp"),       # °C
-            "humidity": main.get("humidity"),      # %
-            "pressure": main.get("pressure"),      # hPa
-            "rain_1h": rain.get("1h", 0.0),        # mm in last hour
-            "snow_1h": snow.get("1h", 0.0),        # mm in last hour
-            "pm25": components.get("pm2_5"),       # µg/m³
-            "pm10": components.get("pm10"),        # µg/m³
-            "aqi": aqi,                            # 1 (good) – 5 (very bad)
+            "temperature": main.get("temp"),       
+            "humidity": main.get("humidity"),      
+            "pressure": main.get("pressure"),     
+            "rain_1h": rain.get("1h", 0.0),        
+            "snow_1h": snow.get("1h", 0.0),        
+            "pm25": components.get("pm2_5"),       
+            "pm10": components.get("pm10"),        
+            "aqi": aqi,                            
         },
         "raw": {
             "weather": weather,

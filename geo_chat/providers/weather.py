@@ -42,7 +42,6 @@ class WeatherProvider(BaseProvider):
         self.category = "environment"
         self.name = "openweather"
         
-        # Get API key from config or environment
         self.api_key = self.config.api_key or os.getenv("OPENWEATHER_API_KEY")
         if not self.api_key:
             raise ValueError("OpenWeatherMap API key is required. Set OPENWEATHER_API_KEY env var or pass via config.")
@@ -52,7 +51,6 @@ class WeatherProvider(BaseProvider):
         units = options.get("units", self.config.get("units", "metric"))
         lang = options.get("lang", self.config.get("lang", "en"))
         
-        # Fetch weather
         weather_params = {
             "lat": location.lat,
             "lon": location.lon,
@@ -64,7 +62,6 @@ class WeatherProvider(BaseProvider):
         weather_resp.raise_for_status()
         weather_data = weather_resp.json()
         
-        # Fetch air quality
         air_params = {
             "lat": location.lat,
             "lon": location.lon,
@@ -93,7 +90,6 @@ class WeatherProvider(BaseProvider):
         components = air_item.get("components", {})
         aqi = air_item.get("main", {}).get("aqi")
         
-        # Use location name from weather data if not provided
         location_name = location.name or weather.get("name")
         
         return DataPoint(

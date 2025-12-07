@@ -19,20 +19,17 @@ def example_single_location():
     print("Example 1: Single Location")
     print("=" * 50)
     
-    # Create weather provider
     weather_provider = create_provider(
         "weather",
-        api_key="your_openweather_api_key"  # Or set OPENWEATHER_API_KEY env var
+        api_key="your_openweather_api_key"  
     )
     
-    # Create location
     location = Location(
         lat=52.2297,
         lon=21.0122,
         name="Warsaw"
     )
     
-    # Fetch data
     data = weather_provider.get_data(location)
     
     print(f"Category: {data.category}")
@@ -51,7 +48,6 @@ def example_batch_processing():
     
     provider = create_provider("weather", api_key="your_key")
     
-    # Create batch request
     request = BatchRequest(
         points=[
             Location(lat=52.2297, lon=21.0122, name="Warsaw"),
@@ -60,7 +56,6 @@ def example_batch_processing():
         ]
     )
     
-    # Fetch batch data
     response = provider.get_batch(request)
     
     print(f"Fetched {len(response.results)} data points")
@@ -82,7 +77,6 @@ def example_doctors_provider():
     
     location = Location(lat=52.2297, lon=21.0122)
     
-    # Fetch with provider-specific options
     data = provider.get_data(
         location,
         service_name="kardiolog",
@@ -94,7 +88,6 @@ def example_doctors_provider():
     print(f"Found {data.metrics.get('facilities_count')} facilities")
     print(f"First available: {data.metrics.get('queue_date')}")
     
-    # Access full results from metadata
     if data.metadata and "results" in data.metadata:
         for facility in data.metadata["results"][:3]:
             print(f"  - {facility.get('provider')}: {facility.get('waiting_days')} days")
@@ -107,13 +100,11 @@ def example_unified_format():
     print("Example 4: Unified Data Format")
     print("=" * 50)
     
-    # Different providers, same format
     weather_provider = create_provider("weather", api_key="your_key")
     doctors_provider = create_provider("doctors")
     
     location = Location(lat=52.2297, lon=21.0122, name="Warsaw")
     
-    # Fetch from different providers
     weather_data = weather_provider.get_data(location)
     doctors_data = doctors_provider.get_data(
         location,
@@ -121,7 +112,6 @@ def example_unified_format():
         urgent=False
     )
     
-    # All data points have the same structure
     data_points = [weather_data, doctors_data]
     
     for data in data_points:
@@ -142,7 +132,6 @@ def example_error_handling():
     
     location = Location(lat=52.2297, lon=21.0122)
     
-    # Provider returns error in DataPoint instead of raising exception
     data = provider.get_data(location)
     
     if data.error:
@@ -156,14 +145,5 @@ if __name__ == "__main__":
     print("Geo Chat Framework - Usage Examples")
     print("=" * 50)
     print()
-    
-    # Note: These examples require API keys to work
-    # Uncomment the ones you want to test
-    
-    # example_single_location()
-    # example_batch_processing()
-    # example_doctors_provider()
-    # example_unified_format()
-    # example_error_handling()
     
     print("See individual example functions for usage patterns.")

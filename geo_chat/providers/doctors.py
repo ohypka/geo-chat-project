@@ -87,10 +87,8 @@ class DoctorsProvider(BaseProvider):
         urgent = options.get("urgent", False)
         limit = options.get("limit", 10)
         
-        # Get location info
         location_info = self._get_location_info(location)
         
-        # Build NFZ API URL
         case = 1 if urgent else 2
         url = (
             f"{NFZ_BASE_URL}?case={case}"
@@ -104,7 +102,6 @@ class DoctorsProvider(BaseProvider):
         resp.raise_for_status()
         data = resp.json()
         
-        # Process results
         results = []
         for item in data.get("data", [])[:limit]:
             attr = item.get("attributes", {})
@@ -143,7 +140,6 @@ class DoctorsProvider(BaseProvider):
         query = raw_data.get("query", {})
         results = raw_data.get("results", [])
         
-        # Use first result for main metrics, or aggregate
         if results:
             first_result = results[0]
             metrics = {

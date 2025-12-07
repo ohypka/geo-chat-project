@@ -7,10 +7,8 @@ and normalize geographic data from various APIs into a unified format.
 Quick Start:
     from geo_chat import create_provider, Location
     
-    # Create a provider
     provider = create_provider("weather", api_key="your_key")
     
-    # Fetch data
     location = Location(lat=52.2297, lon=21.0122, name="Warsaw")
     data = provider.get_data(location)
     
@@ -20,7 +18,6 @@ Creating Custom Providers:
 
 __version__ = "0.1.0"
 
-# Core framework
 from .core import (
     BaseProvider,
     ProviderConfig,
@@ -33,11 +30,9 @@ from .core import (
     ProviderRegistry,
 )
 
-# Import providers to register them
 from . import providers
 
 __all__ = [
-    # Core framework
     "BaseProvider",
     "ProviderConfig",
     "Location",
@@ -47,6 +42,5 @@ __all__ = [
     "create_provider",
     "get_provider",
     "ProviderRegistry",
-    # Convenience exports
     "providers",
 ]

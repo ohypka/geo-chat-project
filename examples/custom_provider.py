@@ -31,7 +31,6 @@ class CustomAPIProvider(BaseProvider):
         self.category = "custom"
         self.name = "custom_api"
         
-        # Get API key from config or environment
         self.api_key = self.config.api_key
         if not self.api_key:
             raise ValueError("API key is required")
@@ -42,13 +41,12 @@ class CustomAPIProvider(BaseProvider):
         
         This is where you make the actual API call.
         """
-        # Example API call
         url = self.config.base_url or "https://api.example.com/data"
         params = {
             "lat": location.lat,
             "lon": location.lon,
             "api_key": self.api_key,
-            **options,  # Pass through any additional options
+            **options,  
         }
         
         response = requests.get(url, params=params, timeout=self.config.timeout)
@@ -63,14 +61,6 @@ class CustomAPIProvider(BaseProvider):
         This is where you transform your API's response format
         into the unified geo_chat format.
         """
-        # Extract data from your API's response format
-        # Example: assuming your API returns something like:
-        # {
-        #     "temperature": 20.5,
-        #     "status": "active",
-        #     "timestamp": "2025-01-15T10:00:00Z"
-        # }
-        
         return DataPoint(
             category=self.category,
             source=self.name,
@@ -79,27 +69,23 @@ class CustomAPIProvider(BaseProvider):
             metrics={
                 "temperature": raw_data.get("temperature"),
                 "status": raw_data.get("status"),
-                # Add any other metrics from your API
             },
             metadata={
-                # Add any additional metadata
+                
             },
-            raw=raw_data,  # Keep raw data for reference
+            raw=raw_data,  
         )
 
 
-# Usage example
 if __name__ == "__main__":
     from geo_chat import create_provider, Location
     
-    # Create your custom provider
     config = ProviderConfig(
         api_key="your_api_key",
         base_url="https://api.example.com/data",
     )
     provider = create_provider("custom_api", config=config)
     
-    # Use it just like any other provider
     location = Location(lat=52.2297, lon=21.0122, name="Warsaw")
     data = provider.get_data(location)
     

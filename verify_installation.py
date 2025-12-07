@@ -23,10 +23,10 @@ def test_imports():
             ProviderConfig,
             ProviderRegistry,
         )
-        print("✓ Core components imported successfully")
+        print("Core components imported successfully")
         return True
     except ImportError as e:
-        print(f"✗ Import failed: {e}")
+        print(f"Import failed: {e}")
         return False
 
 def test_provider_registration():
@@ -36,21 +36,20 @@ def test_provider_registration():
     print("-" * 60)
     
     try:
-        # Import providers to trigger registration
         from geo_chat import providers
         
         registered = ProviderRegistry.list_providers()
-        print(f"✓ Found {len(registered)} registered providers:")
+        print(f"Found {len(registered)} registered providers:")
         for name in registered:
             print(f"  - {name}")
         
         if len(registered) == 0:
-            print("⚠ Warning: No providers registered!")
+            print("Warning: No providers registered!")
             return False
         
         return True
     except Exception as e:
-        print(f"✗ Registration failed: {e}")
+        print(f"Registration failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -69,11 +68,11 @@ def test_location_model():
             city="Warsaw",
             country="Poland"
         )
-        print(f"✓ Location created: {location.name}")
+        print(f"Location created: {location.name}")
         print(f"  Coordinates: ({location.lat}, {location.lon})")
         return True
     except Exception as e:
-        print(f"✗ Location creation failed: {e}")
+        print(f"Location creation failed: {e}")
         return False
 
 def test_datapoint_model():
@@ -93,10 +92,10 @@ def test_datapoint_model():
             timestamp=datetime.now(timezone.utc).isoformat(),
             metrics={"value": 42}
         )
-        print(f"✓ DataPoint created: {data_point.category}/{data_point.source}")
+        print(f"DataPoint created: {data_point.category}/{data_point.source}")
         return True
     except Exception as e:
-        print(f"✗ DataPoint creation failed: {e}")
+        print(f"DataPoint creation failed: {e}")
         return False
 
 def test_provider_creation():
@@ -106,25 +105,23 @@ def test_provider_creation():
     print("-" * 60)
     
     try:
-        # Test doctors provider (no API key needed)
         doctors = create_provider("doctors")
-        print("✓ Doctors provider created")
+        print("Doctors provider created")
         
-        # Test weather provider (will fail without API key, but should handle gracefully)
         try:
             weather = create_provider("weather")
-            print("✓ Weather provider created (API key may be needed)")
+            print("Weather provider created (API key may be needed)")
         except ValueError as e:
             if "API key" in str(e):
-                print("⚠ Weather provider requires API key (expected)")
+                print("Weather provider requires API key (expected)")
             else:
                 raise
         except Exception as e:
-            print(f"⚠ Weather provider: {type(e).__name__}")
+            print(f"Weather provider: {type(e).__name__}")
         
         return True
     except Exception as e:
-        print(f"✗ Provider creation failed: {e}")
+        print(f"Provider creation failed: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -141,14 +138,14 @@ def test_provider_methods():
         methods = ['fetch', 'normalize', 'get_data', 'get_batch']
         for method in methods:
             if hasattr(doctors, method) and callable(getattr(doctors, method)):
-                print(f"✓ Method '{method}' exists")
+                print(f"Method '{method}' exists")
             else:
-                print(f"✗ Method '{method}' missing or not callable")
+                print(f"Method '{method}' missing or not callable")
                 return False
         
         return True
     except Exception as e:
-        print(f"✗ Method test failed: {e}")
+        print(f"Method test failed: {e}")
         return False
 
 def test_error_handling():
@@ -161,17 +158,16 @@ def test_error_handling():
         doctors = create_provider("doctors")
         location = Location(lat=52.2297, lon=21.0122)
         
-        # This should return DataPoint with error (missing service_name)
         result = doctors.get_data(location)
         
         if result.error:
-            print(f"✓ Error handling works: {result.error[:60]}...")
+            print(f"Error handling works: {result.error[:60]}...")
         else:
-            print("✓ No error (provider handled request)")
+            print("No error (provider handled request)")
         
         return True
     except Exception as e:
-        print(f"✗ Error handling test failed: {e}")
+        print(f"Error handling test failed: {e}")
         return False
 
 def main():
@@ -196,12 +192,11 @@ def main():
             result = test()
             results.append(result)
         except Exception as e:
-            print(f"\n✗ Test crashed: {e}")
+            print(f"\n Test crashed: {e}")
             import traceback
             traceback.print_exc()
             results.append(False)
     
-    # Summary
     print("\n" + "=" * 60)
     print("Test Summary")
     print("=" * 60)
@@ -210,18 +205,17 @@ def main():
     print(f"Tests passed: {passed}/{total}")
     
     if passed == total:
-        print("\n✅ All tests passed! Framework is working correctly.")
+        print("\n All tests passed! Framework is working correctly.")
         print("\nNext steps:")
         print("1. Set OPENWEATHER_API_KEY to test weather provider")
         print("2. Try: python examples/simple_example.py")
         print("3. See docs/CREATING_PROVIDERS.md to create custom providers")
         return 0
     else:
-        print(f"\n⚠ {total - passed} test(s) failed. Please check the errors above.")
+        print(f"\n {total - passed} test(s) failed. Please check the errors above.")
         return 1
 
 if __name__ == "__main__":
-    # Import here to show errors clearly
     from geo_chat import (
         create_provider,
         Location,

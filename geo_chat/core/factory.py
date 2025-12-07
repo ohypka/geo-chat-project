@@ -26,11 +26,9 @@ def create_provider(
         ValueError: If provider is not found
         
     Example:
-        # Using config object
         config = ProviderConfig(api_key="your_key")
         provider = create_provider("weather", config=config)
         
-        # Using kwargs
         provider = create_provider("weather", api_key="your_key")
     """
     provider_class = registry.get_provider_class(provider_name)
@@ -42,7 +40,6 @@ def create_provider(
             f"Available providers: {available}"
         )
     
-    # Create config if kwargs provided
     if config is None and config_kwargs:
         config = ProviderConfig(**config_kwargs)
     
