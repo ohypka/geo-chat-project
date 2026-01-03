@@ -43,169 +43,208 @@ class Point(BaseModel):
     lon: float
     name: Optional[str] = None
 
+
 @app.get("/environment")
-def get_environment(
-    lat: float = Query(..., description="Latitude"),
-    lon: float = Query(..., description="Longitude"),
-    name: Optional[str] = Query(None, description="Optional location name"),
-):
-    """
-    Get current environment data (weather + air quality) for a single point.
-    """
-    try:
-        data = normalize_environment_data(lat, lon, name=name)
-        return JSONResponse(content=data)
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": str(e)},
-        )
+def get_environment(lat: float, lon: float, name: Optional[str] = None):
+    return JSONResponse(content=normalize_environment_data(lat, lon, name=name))
 
 
-@app.post("/environment/batch")
-def get_environment_batch(points: List[Point]):
-    """
-    Get environment data for multiple points at once.
-
-    Request body: JSON array of {lat, lon, name?}
-    """
-    pts: List[Dict[str, Any]] = [p.dict() for p in points]
-    data = get_environment_for_points(pts)
-    return JSONResponse(content=data)
-
-
-@app.get("/environment/hourly")
-def get_environment_hourly(
-    lat: float = Query(..., description="Latitude"),
-    lon: float = Query(..., description="Longitude"),
-    hours: int = Query(24, ge=1, le=120, description="Number of hours forward (approx.)"),
-    name: Optional[str] = Query(None, description="Optional location name"),
-):
-    """
-    Get environment timeseries for the next `hours` hours (approximate).
-
-    Uses 3-hour forecast steps from OpenWeather.
-    """
-    try:
-        data = get_hourly_environment_timeseries(lat, lon, hours=hours, name=name)
-        return JSONResponse(content=data)
-    except Exception as e:
-        return JSONResponse(
-            status_code=500,
-            content={"error": str(e)},
-        )
-
-
-# Konfiguracja API Google (Darmowe w Free Tier)
+# --- KONFIGURACJA AI ---
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 if GOOGLE_API_KEY:
     genai.configure(api_key=GOOGLE_API_KEY)
-else:
-    print("UWAGA: Brak klucza GOOGLE_API_KEY. Czat nie będzie działał.")
 
-# Providerzy do danych
 weather_provider = create_provider("weather", api_key=os.getenv("OPENWEATHER_API_KEY"))
 doctors_provider = create_provider("doctors")
 
 
-# Definicje narzędzi dla AI
-def get_weather(city: str): pass
+# --- ZAAWANSOWANE DEFINICJE NARZĘDZI ---
+# Tutaj definiujemy parametry, o które AI ma prawo pytać użytkownika.
 
-def get_doctors(specialization: str, urgent: bool = False): pass
-
-def get_bikes(city: str = "Wroclaw"): pass
-
-def get_traffic(location: str = "Wroclaw"): pass
+def get_weather(city: str):
+    """Pobiera aktualną pogodę."""
+    pass
 
 
-# Inicjalizacja modelu
+def get_doctors(specialization: str, scope: str = "city", city: str = None, radius_km: int = 10, urgent: bool = False):
+    """
+    Szuka lekarzy lub placówek medycznych.
+
+    :param specialization: Specjalizacja (np. kardiolog, okulista, pediatra).
+    :param scope: Zakres wyszukiwania. Wartości:
+                  - "city" (konkretne miasto),
+                  - "near_me" (blisko użytkownika, wymaga promienia),
+                  - "poland" (cała Polska, rzadcy specjaliści).
+    :param city: Nazwa miasta (wymagane jeśli scope="city").
+    :param radius_km: Promień wyszukiwania w kilometrach (używane gdy scope="near_me"). Domyślnie 10.
+    :param urgent: Czy szukać pilnych terminów (termin "na już").
+    """
+    pass
+
+
+def get_bikes(city: str = "Wroclaw", location_query: str = None, radius_m: int = 500):
+    """
+    Szuka stacji rowerowych.
+
+    :param city: Miasto (domyślnie Wroclaw).
+    :param location_query: Nazwa ulicy, punktu orientacyjnego lub dzielnicy (np. "Grunwaldzka", "Rynek").
+    :param radius_m: Promień szukania w metrach (gdy szukamy blisko punktu).
+    """
+    pass
+
+
+def get_traffic(city: str, street: str = None):
+    """
+    Sprawdza natężenie ruchu (korki).
+
+    :param city: Miasto.
+    :param street: Konkretna ulica do sprawdzenia (opcjonalne - jeśli brak, sprawdza ogólny stan miasta).
+    """
+    pass
+
+    # --- PROMPT INŻYNIERIA (Instrukcja Inteligencji) ---
+SYSTEM_INSTRUCTION = (
+    "Jesteś inteligentnym asystentem Geo Chat. Twoim celem jest precyzyjne dostarczenie danych na mapie. "
+    "ZASADY:"
+    "1. Jeśli zapytanie jest niejasne (np. 'znajdź lekarza' bez podania miasta lub lokalizacji), "
+    "NIE ZGADUJ. Dopytaj użytkownika o szczegóły (np. 'W jakim mieście?', 'W jakim promieniu?'). "
+    "2. Jeśli użytkownik poda ulicę przy rowerach/korkach, użyj tego parametru. "
+    "3. Gdy otrzymasz wyniki z narzędzi, opisz je użytkownikowi w kontekście jego zapytania. "
+    "4. Bądź pomocny i konkretny."
+    "5. Pamiętaj kontekst rozmowy"
+    )
+
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+if GOOGLE_API_KEY:
+    genai.configure(api_key=GOOGLE_API_KEY)
+
 tools = [get_weather, get_doctors, get_bikes, get_traffic]
 model = genai.GenerativeModel('gemini-flash-latest', tools=tools) if GOOGLE_API_KEY else None
 
+weather_provider = create_provider("weather", api_key=os.getenv("OPENWEATHER_API_KEY"))
+doctors_provider = create_provider("doctors")
 
+# Model z pamięcią systemową
+model = genai.GenerativeModel(
+    'gemini-flash-latest',
+    tools=tools,
+    system_instruction=SYSTEM_INSTRUCTION
+) if GOOGLE_API_KEY else None
+
+class ChatHistoryItem(BaseModel):
+    role: str
+    parts: List[Dict[str, str]]
 class ChatRequest(BaseModel):
     message: str
+    history: List[ChatHistoryItem] = []  # <--- Tutaj wpada historia z Reacta
     lat: float = 52.2297
     lon: float = 21.0122
 
 
 @app.post("/api/chat")
 async def chat_endpoint(request: ChatRequest):
-    """
-    Endpoint obsługujący czat z AI sterujący mapą.
-    """
     if not model:
-        raise HTTPException(status_code=500, detail="Brak konfiguracji AI (klucza Google).")
+        raise HTTPException(status_code=500, detail="Brak klucza API Google.")
 
-    print(f"Pytanie: {request.message}")
+    print(f"Pytanie: {request.message} | Historia: {len(request.history)} wiadomości")
 
-    # Rozpocznij sesję czatu
-    chat = model.start_chat(enable_automatic_function_calling=False)
+    # 1. Konwersja historii z formatu Reacta na format Gemini
+    # Gemini wymaga formatu: [{'role': 'user', 'parts': ['text']}, {'role': 'model', 'parts': ['text']}]
+    gemini_history = []
+    for item in request.history:
+        # Ignorujemy puste wiadomości lub błędy, bierzemy tylko tekst
+        text_content = item.parts[0].get('text', '') if item.parts else ''
+        if text_content:
+            gemini_history.append({
+                "role": item.role,
+                "parts": [text_content]
+            })
 
-    system_instruction = (
-        "Jesteś asystentem mapy Geo Chat. "
-        "Masz narzędzia: pogoda, lekarze, rowery, ruch drogowy. "
-        "UŻYJ ich, gdy użytkownik pyta o dane. "
-        "Odpowiadaj krótko i po polsku."
-    )
+    # 2. Uruchamiamy czat Z HISTORIĄ
+    chat = model.start_chat(history=gemini_history, enable_automatic_function_calling=False)
 
     try:
-        # Wysyłamy zapytanie do AI
-        response = chat.send_message(f"{system_instruction}\nUżytkownik: {request.message}")
+        # 3. Wysyłamy nową wiadomość
+        response = chat.send_message(request.message)
 
         response_text = ""
         map_data = None
         layer_type = None
 
-        # Sprawdzamy, czy AI chce użyć narzędzia (Function Calling)
+        # 4. Obsługa narzędzi (Function Calling)
         if response.parts and response.parts[0].function_call:
             fc = response.parts[0].function_call
             fn_name = fc.name
             args = fc.args
 
-            print(f"AI wybrało narzędzie: {fn_name}")
+            print(f" AI uruchamia: {fn_name} {args}")
+            ai_summary_data = {}
 
+            # --- LOGIKA FUNKCJI ---
             if fn_name == "get_weather":
                 city = args.get("city", "Warsaw")
-                loc = Location(lat=request.lat, lon=request.lon, name=city)
-                data = weather_provider.get_data(loc)
-                response_text = f"Pogoda w {city}: {data.metrics.get('temperature')}°C."
-                map_data = data.dict()
-                layer_type = "weather"
+                try:
+                    loc = Location(lat=request.lat, lon=request.lon, name=city)
+                    data = weather_provider.get_data(loc)
+                    map_data = data.dict()
+                    layer_type = "weather"
+                    ai_summary_data = data.metrics
+                except Exception as e:
+                    ai_summary_data = {"error": str(e)}
 
             elif fn_name == "get_doctors":
-                spec = args.get("specialization", "ogólny")
-                urgent = args.get("urgent", False)
+                spec = args.get("specialization")
+                target_city = args.get("city")
+                scope = args.get("scope", "city")
                 try:
-                    loc = Location(lat=request.lat, lon=request.lon)
-                    data = doctors_provider.get_data(loc, service_name=spec, urgent=urgent)
+                    search_loc = Location(lat=request.lat, lon=request.lon)
+                    if target_city: search_loc.name = target_city
+
+                    data = doctors_provider.get_data(search_loc, service_name=spec)
                     count = data.metrics.get('facilities_count', 0)
-                    response_text = f"Znaleziono {count} placówek dla specjalizacji: {spec}."
                     map_data = data.dict()
+                    layer_type = "doctors"
+                    ai_summary_data = {"found": count, "city": target_city or "current location"}
                 except Exception as e:
-                    print(f"Błąd lekarzy: {e}")
-                    response_text = f"Szukałem lekarza ({spec}), ale wystąpił błąd pobierania danych."
-                layer_type = "doctors"
+                    ai_summary_data = {"error": str(e)}
 
             elif fn_name == "get_bikes":
+                target_city = args.get("city", "Wroclaw")
+                street = args.get("location_query")
                 try:
-                    # Nextbike zazwyczaj nie wymaga klucza, więc próbujemy pobrać naprawdę
                     raw_data = normalize_nextbike_data()
-                    count = len(raw_data) if raw_data else 0
-                    response_text = f"Pobrałem dane rowerowe. Liczba stacji: {count}."
-                    map_data = {"type": "FeatureCollection", "features": raw_data}
+                    final_features = raw_data
+                    if street:
+                        final_features = [s for s in raw_data if
+                                          street.lower() in (s.get("properties", {}).get("name", "") or "").lower()]
+
+                    map_data = {"type": "FeatureCollection", "features": final_features}
+                    layer_type = "bikes"
+                    ai_summary_data = {"total": len(raw_data), "filtered": len(final_features), "street": street}
                 except Exception as e:
-                    print(f"Błąd rowerów: {e}")
-                    response_text = "Nie udało się pobrać danych o rowerach."
-                layer_type = "bikes"
+                    ai_summary_data = {"error": str(e)}
+
             elif fn_name == "get_traffic":
-                raw_data = get_traffic_data()
-                response_text = "Pobrałem dane o natężeniu ruchu."
-                map_data = {"type": "FeatureCollection", "features": raw_data}
-                layer_type = "traffic"
+                try:
+                    raw_data = get_traffic_data()
+                    map_data = {"type": "FeatureCollection", "features": raw_data}
+                    layer_type = "traffic"
+                    ai_summary_data = {"status": "ok"}
+                except Exception as e:
+                    ai_summary_data = {"error": "No traffic data"}
+
+            # 5. Odsyłamy dane do AI, żeby je opisało
+            final_response = chat.send_message(
+                {
+                    "function_response": {
+                        "name": fn_name,
+                        "response": {"result": ai_summary_data}
+                    }
+                }
+            )
+            response_text = final_response.text
 
         else:
-            # Dopiero jeśli NIE MA funkcji, czytamy zwykły tekst
             response_text = response.text
 
         return {
@@ -215,5 +254,10 @@ async def chat_endpoint(request: ChatRequest):
         }
 
     except Exception as e:
-        print(f"Błąd: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f" Error: {e}")
+        return {"response": f"Błąd: {str(e)}", "mapData": None, "layerType": None}
+
+
+@app.get("/environment")
+def get_environment(lat: float, lon: float):
+    return JSONResponse(content=normalize_environment_data(lat, lon))

@@ -76,6 +76,8 @@ export default function ChatShell() {
             content: text
         };
 
+        const currentHistory = messagesByThread[activeThreadId] ?? [];
+
         // 2. Dodajemy ją natychmiast do widoku (żeby użytkownik widział co napisał)
         setMessagesByThread((prev) => ({
             ...prev,
@@ -89,13 +91,21 @@ export default function ChatShell() {
         }
 
         try {
-            // 4. Wysyłamy zapytanie do Twojego Backendu (Python)
+            // 3. Przygotowujemy historię dla backendu
+            // Mapujemy 'assistant' na 'model', bo tak wymaga Gemini
+            const historyToSend = currentHistory.map(msg => ({
+                role: msg.role === "assistant" ? "model" : "user",
+                parts: [{ text: msg.content }]
+            }));
+
+            // 4. Wysyłamy wiadomość + HISTORIĘ
             const response = await fetch("http://localhost:8000/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     message: text,
-                    lat: 52.2297, // Domyślne współrzędne (Warszawa)
+                    history: historyToSend, // <--- NOWOŚĆ: Wysyłamy pamięć
+                    lat: 52.2297,
                     lon: 21.0122,
                 }),
             });
