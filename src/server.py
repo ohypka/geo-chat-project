@@ -174,22 +174,30 @@ async def chat_endpoint(request: ChatRequest):
                 layer_type = "weather"
 
             elif fn_name == "get_doctors":
-                spec = args.get("specialization")
+                spec = args.get("specialization", "ogólny")
                 urgent = args.get("urgent", False)
-                loc = Location(lat=request.lat, lon=request.lon)
-                data = doctors_provider.get_data(loc, service_name=spec, urgent=urgent)
-                count = data.metrics.get('facilities_count', 0)
-                response_text = f"Znaleziono {count} placówek ({spec})."
-                map_data = data.dict()
+                try:
+                    loc = Location(lat=request.lat, lon=request.lon)
+                    data = doctors_provider.get_data(loc, service_name=spec, urgent=urgent)
+                    count = data.metrics.get('facilities_count', 0)
+                    response_text = f"Znaleziono {count} placówek dla specjalizacji: {spec}."
+                    map_data = data.dict()
+                except Exception as e:
+                    print(f"Błąd lekarzy: {e}")
+                    response_text = f"Szukałem lekarza ({spec}), ale wystąpił błąd pobierania danych."
                 layer_type = "doctors"
 
             elif fn_name == "get_bikes":
-                raw_data = normalize_nextbike_data()
-                count = len(raw_data) if raw_data else 0
-                response_text = f"Pobrałem dane rowerowe. Liczba stacji: {count}."
-                map_data = {"type": "FeatureCollection", "features": raw_data}
+                try:
+                    # Nextbike zazwyczaj nie wymaga klucza, więc próbujemy pobrać naprawdę
+                    raw_data = normalize_nextbike_data()
+                    count = len(raw_data) if raw_data else 0
+                    response_text = f"Pobrałem dane rowerowe. Liczba stacji: {count}."
+                    map_data = {"type": "FeatureCollection", "features": raw_data}
+                except Exception as e:
+                    print(f"Błąd rowerów: {e}")
+                    response_text = "Nie udało się pobrać danych o rowerach."
                 layer_type = "bikes"
-
             elif fn_name == "get_traffic":
                 raw_data = get_traffic_data()
                 response_text = "Pobrałem dane o natężeniu ruchu."
