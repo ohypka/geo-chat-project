@@ -69,15 +69,23 @@ export default function Sidebar({
                     <span className="truncate">{t.title}</span>
 
                     {active && (
-                      <button
-
+                      <div
                         onClick={(e) => {
                           e.stopPropagation();
                           onDeleteThread(t.id);
                         }}
                         title="Usuń czat"
                         aria-label="Usuń czat"
-                        className="opacity-0 group-hover:opacity-100 inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-neutral-700 transition"
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            onDeleteThread(t.id);
+                          }
+                        }}
+                        className="opacity-0 group-hover:opacity-100 inline-flex h-7 w-7 items-center justify-center rounded-md hover:bg-neutral-700 transition cursor-pointer"
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -97,7 +105,7 @@ export default function Sidebar({
                           <path d="M5 6l1 14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-14" />
                           <path d="M10 6V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2" />
                         </svg>
-                      </button>
+                      </div>
                     )}
                   </button>
                 </li>
