@@ -17,6 +17,8 @@ from ..core.base import BaseProvider, ProviderConfig
 from ..core.models import DataPoint, Location
 from ..core.registry import register_provider
 
+from src.utils.geocoding import calculate_distance
+
 NOMINATIM_URL = "https://nominatim.openstreetmap.org/reverse"
 NFZ_BASE_URL = "https://api.nfz.gov.pl/app-itl-api/queues"
 HEADERS = {"User-Agent": "NFZDoctorFinder/1.1"}
@@ -103,11 +105,19 @@ class DoctorsProvider(BaseProvider):
         data = resp.json()
         
         results = []
+        raw_items = data.get("data", [])
+
+        # Sprawdzamy czy mamy punkt odniesienia (np. współrzędne ulicy Reja)
+        target_lat = options.get("target_lat")
+        target_lon = options.get("target_lon")
+
+        for item in raw_items:
+            attr = item.get("attributes", {})
         for item in data.get("data", [])[:limit]:
             attr = item.get("attributes", {})
             stats = attr.get("statistics", {}).get("provider-data", {})
             dates = attr.get("dates", {})
-            
+
             results.append({
                 "provider": attr.get("provider"),
                 "place": attr.get("place"),

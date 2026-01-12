@@ -65,7 +65,7 @@ export default function ChatShell() {
         setThreads((prev) => prev.map((t) => (t.id === threadId ? { ...t, title } : t)));
     }
 
-    async function sendMessage(text: string) {
+async function sendMessage(text: string) {
         if (!activeThreadId) return;
 
         // 1. Tworzymy wiadomość użytkownika
@@ -76,36 +76,37 @@ export default function ChatShell() {
             content: text
         };
 
+        // Pobieramy AKTUALNĄ historię (zanim dodamy nową wiadomość)
         const currentHistory = messagesByThread[activeThreadId] ?? [];
 
-        // 2. Dodajemy ją natychmiast do widoku (żeby użytkownik widział co napisał)
+        // 2. Dodajemy wiadomość do widoku
         setMessagesByThread((prev) => ({
             ...prev,
             [activeThreadId]: [...(prev[activeThreadId] ?? []), userMsg],
         }));
 
-        // 3. Aktualizujemy nazwę wątku (jeśli to nowy czat)
+        // Zmieniamy nazwę wątku jeśli to nowy czat
         const activeThread = threads.find((t) => t.id === activeThreadId);
         if (activeThread && activeThread.title === "Nowy czat") {
             renameThread(activeThreadId, text.slice(0, 28) + (text.length > 28 ? "…" : ""));
         }
 
         try {
-            // 3. Przygotowujemy historię dla backendu
-            // Mapujemy 'assistant' na 'model', bo tak wymaga Gemini
+            // 3. PRZYGOTOWANIE HISTORII DLA AI
+            // Mapujemy role: 'assistant' (React) -> 'model' (Gemini)
             const historyToSend = currentHistory.map(msg => ({
                 role: msg.role === "assistant" ? "model" : "user",
-                parts: [{ text: msg.content }]
+                parts: [{ text: typeof msg.content === 'string' ? msg.content : "Mapa została wyświetlona." }]
             }));
 
-            // 4. Wysyłamy wiadomość + HISTORIĘ
+            // 4. Wysyłamy zapytanie Z HISTORIĄ
             const response = await fetch("http://localhost:8000/api/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     message: text,
-                    history: historyToSend, // <--- NOWOŚĆ: Wysyłamy pamięć
-                    lat: 52.2297,
+                    history: historyToSend, // <--- KLUCZOWE: Wysyłamy pamięć
+                    lat: 52.2297, // Tutaj docelowo można wpiąć prawdziwą lokalizację z mapy
                     lon: 21.0122,
                 }),
             });
@@ -114,15 +115,17 @@ export default function ChatShell() {
 
             const data = await response.json();
 
-            // 5. Tworzymy wiadomość od asystenta na podstawie odpowiedzi z AI
+            // 5. Obsługa odpowiedzi
             const assistantMsg: Msg = {
                 id: `m${Date.now()}a`,
                 role: "assistant",
-                type: "text",
+                type: data.layerType ? "map" : "text",
                 content: data.response || "Brak odpowiedzi.",
+                title: data.layerType ? `Mapa: ${data.layerType}` : undefined,
+                mapData: data.mapData,
+                layerType: data.layerType
             };
 
-            // 6. Dodajemy odpowiedź AI do widoku
             setMessagesByThread((prev) => ({
                 ...prev,
                 [activeThreadId]: [...(prev[activeThreadId] ?? []), assistantMsg],
@@ -130,7 +133,6 @@ export default function ChatShell() {
 
         } catch (error) {
             console.error(error);
-            // Opcjonalnie: komunikat o błędzie
             const errorMsg: Msg = {
                 id: `m${Date.now()}e`,
                 role: "assistant",
