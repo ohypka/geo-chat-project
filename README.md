@@ -509,3 +509,251 @@ http://127.0.0.1:8000/docs
 - fastapi
 - uvicorn
 
+
+
+# Traffic Flow Module
+Module for collecting and standardizing real-time traffic flow data using the TomTom Traffic API.
+Provides current traffic information such as average speed, free-flow speed for single or multiple geographic points. Ideal for map visualization.
+
+## Features
+- Fetch real-time traffic flow from TomTom Traffic API
+- Normalize and standarize responses to unified JSON format
+- Batch requests support for multiple coordinates
+- Provides confidence metric indicating data reliability
+- Includes FastAPI backend with REST endpoints
+
+## Structure
+src/traffic/
+- traffic.py
+- main_traffic.py
+- server_traffic.py
+
+## Endpoints
+/traffic - GET - get current traffic flow for a single point  
+/traffic/batch - POST - get current traffic flow for multiple points  
+
+## Example JSON
+```json
+{
+  "category": "traffic",
+  "coordinates": [
+    [23.16902872248761, 53.13229011700134],
+    [23.16901397033803, 53.13237595999718],
+    [23.168984466038864, 53.132412167887786],
+    [23.168937527381104, 53.13244837574787],
+    [23.168921434127014, 53.13245777972875],
+    [23.168812804661883, 53.13248996446061],
+    [23.168759160481585, 53.13249398755041],
+    [23.168701492987708, 53.13249262975762],
+    [23.16864784880741, 53.13248458357744],
+    [23.168588840209082, 53.132468491212514],
+    [23.16852714940171, 53.13244571044808],
+    [23.16848557516198, 53.13242423717788],
+    [23.168457411967324, 53.132402763896906],
+    [23.168431930981683, 53.13237460220073],
+    [23.168421202145623, 53.13235312889495],
+    [23.168414496623086, 53.13233437117408],
+    [23.168410473309564, 53.132302186325695],
+    [23.16841315551858, 53.13228342858262]
+  ],
+  "location": {
+    "lat": 53.1325,
+    "lon": 23.1688,
+    "name": "Bialystok"
+  },
+  "metrics": {
+    "confidence": 1,
+    "current_speed": 32,
+    "free_flow_speed": 32
+  },
+  "source": "tomtom",
+  "timestamp": "2025-11-11T20:18:11.687366+00:00"
+}
+```
+
+## How to run
+
+### 1. Create and activate virtual environment
+```bash
+python -m venv venv
+venv\Scripts\Activate.ps1
+```
+
+### 2. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Add .env file with
+```bash
+TOMTOM_API_KEY=your_api_key
+```
+
+### 4. Run server
+```bash
+uvicorn src.server:app --reload
+```
+
+### 5. Open documentation
+```bash
+http://127.0.0.1:8000/docs
+```
+
+
+## Dependencies
+- Python 3.10+
+- requests
+- python-dotenv
+- fastapi
+- uvicorn
+
+# Bikes Availability Module (Nextbike)
+Module for collecting and standardizing real-time data on the availability of bikes and free racks from the Nextbike API.
+
+Provides current information on stations, available bikes, and their types (e.g., standard, electric) for Polish cities. Ideal for map visualization.
+
+---
+
+## Features
+- Fetch real-time bike availability data from Nextbike API
+- Filter data to include only Poland (countries=pl)
+- Normalize station data to a unified JSON format
+- Differentiates between local systems/brands (e.g., Veturilo, Chełmski Rower)
+- Includes FastAPI backend with a dedicated /nextbike endpoint
+
+## Structure
+src/bikes/
+- nextbike.py - data fetching, normalization, and handling of ID mapping
+- main_nextbike.py - example usage and local tests
+- server_nextbike.py - FastAPI backend with API endpoint
+
+## Endpoints
+/nextbike - GET - get the current status of all Nextbike stations in Poland
+
+## Example JSON for /doctors GET endpoint
+```json
+{
+  "category": "bikeshare",
+  "source": "nextbike",
+  "location": {
+    "lat": 52.2297,
+    "lon": 21.0122,
+    "name": "Rondo Dmowskiego",
+    "city": "Warsaw",
+    "country": "Poland"
+  },
+  "timestamp": "2025-11-14T18:30:00.000000+00:00",
+  "metrics": {
+    "bikes_available": 10,
+    "docks_available": 5,
+    "rental_key": 37201,
+    "spot_id": 123456,
+    "system_brand": "Veturilo",
+    "available_bike_types": [
+      {
+        "type_name": "Typ roweru: ID 71",
+        "available_count": 8
+      },
+      {
+        "type_name": "Typ roweru: ID 229",
+        "available_count": 2
+      }
+    ]
+  }
+}
+```
+
+## Special Note on Bike Types (ID Mapping)
+The primary Nextbike API endpoint (/maps/nextbike-official.json) provides bike types only as numeric IDs (e.g., ID 71) in the available_bike_types metric. Obtaining the human-readable names (e.g., "Standard Bike") requires calling a separate, authenticated API endpoint (/api/getBikeTypes.xml), co-located with transactional APIs. Access to this mapping requires a properly authorized NEXTBIKE_API_KEY. The current module logic correctly aggregates and returns counts by ID, awaiting external mapping.
+
+## How to run
+### 1. Create and activate virtual environment
+```bash
+python -m venv venv
+venv\Scripts\Activate.ps1
+```
+
+### 2. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Run server
+```bash
+uvicorn src.server:app --reload
+```
+
+### 4. Open documentation
+```bash
+http://127.0.0.1:8000/docs
+```
+
+## Dependencies
+- Python 3.10+
+- requests
+- python-dotenv
+- fastapi
+- uvicorn
+- xml.etree.ElementTree
+
+
+Map Visualization Component (Next.js + Leaflet)
+===============================================
+
+Client-side component for visualizing multiple real-time datasets on an interactive map using **Leaflet** in a **Next.js** project. Combines weather, air quality, doctors availability, traffic, and bike share stations into one map interface.
+
+Features
+--------
+
+*   Renders **Weather** (temperature, humidity, pressure, PM2.5/PM10, AQI) as colored circle markers
+    
+*   Renders **Doctors** locations with detailed popups including service, waiting days, and queue dates
+    
+*   Renders **Traffic** flow with color-coded markers indicating congestion level (green = smooth, orange = slow, red = heavy traffic)
+    
+*   Renders **Bike Share** stations with availability of bikes and docks, color-coded by number of available bikes
+    
+*   Supports **layer control** to toggle visibility of datasets
+    
+*   Uses dynamic JSON input (standardized format) for all data layers
+    
+How to Run
+----------
+
+1.  **Install dependencies** (if you haven’t already):
+    
+```bash
+npm install  
+# or  
+yarn install 
+```
+
+1.  **Start the Next.js development server**:
+    
+```bash
+npm run dev
+# or
+yarn dev
+```
+
+1.  **Open your browser** and navigate to:
+    
+```bash
+http://localhost:3000/component/Map
+```
+
+*   This will render the **MapComponent**, showing all available layers: **Weather**, **Doctors**, **Traffic**, and **Bikes**.
+    
+*   Use the **layer control** in the top-right corner of the map to toggle visibility of different datasets.
+    
+*   Any changes to the component or datasets will automatically refresh the page in **development mode**.
+    
+
+Dependencies
+------------
+
+*   React 18+ / Next.js 13+
+    
+*   Leaflet 1.9+
+    
+*   leaflet.css (imported in MapComponent)

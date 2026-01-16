@@ -1,175 +1,88 @@
 "use client";
 
-import { useEffect } from "react";
-import L from "leaflet";
+import { useState, useEffect } from "react";
+import { MapContainer, TileLayer, CircleMarker, Polyline, Tooltip, LayersControl, LayerGroup } from "react-leaflet";
+import MarkerClusterGroup from 'react-leaflet-markercluster';
+import MapMarker from "../markers/DoctorMarker.js";
+import { doctorsData } from "../../data/doctorsData.js";
+import { weatherData } from "../../data/weatherData.js";
+import { trafficData } from "../../data/trafficData.js";
+import { bikesData } from "../../data/bikeData.js";
 import "leaflet/dist/leaflet.css";
 
-//Location data
-import { weatherData } from "./weatherData";
-import { doctorsData } from "./doctorsData";
-import { trafficData } from "./trafficData";
-import { bikesData } from "./bikeData";
-
-
-
-let mapInstance;
+const { Overlay } = LayersControl;
 
 export default function MapComponent() {
-    useEffect(() => {
-        if (mapInstance) {
-            mapInstance.remove();
-            mapInstance = null;
-        }
+  const [isClient, setIsClient] = useState(false);
 
-        mapInstance = L.map("map").setView([52.2297, 21.0122], 13);
+  useEffect(() => setIsClient(true), []);
+  if (!isClient) return null;
 
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 19,
-        }).addTo(mapInstance);
+  return (
+    <MapContainer center={[52.2297, 21.0122]} zoom={13} style={{ width: "100%", height: "100vh" }}>
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-        //Weather Layer
-        const weatherLayer = L.layerGroup();
-        weatherData.features.forEach((feature) => {
-            const { coordinates } = feature.geometry;
-            const { metrics, location } = feature.properties;
+      <LayersControl position="topright">
 
-            const temp = metrics?.temperature ?? 0;
-            let color = "#1E90FF";
-            if (temp >= 25) color = "#FF4500";
-            else if (temp >= 15) color = "#FFA500";
-            else if (temp >= 5) color = "#FFFF00";
+        <Overlay name="Doctors" checked>
+          <LayerGroup>
+            <MarkerClusterGroup>
+              {doctorsData.features.map((doc, i) => (
+                <MapMarker key={i} marker={doc} />
+              ))}
+            </MarkerClusterGroup>
+          </LayerGroup>
+        </Overlay>
 
-            const circle = L.circleMarker([coordinates[1], coordinates[0]], {
-                radius: 12,
-                fillColor: color,
-                color: "#000",
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8,
-            }).bindPopup(`
-        <b>${location.name}</b><br>
-        Temp: ${temp} °C<br>
-        Humidity: ${metrics?.humidity ?? "-"}%<br>
-        Pressure: ${metrics?.pressure ?? "-"} hPa<br>
-        PM2.5: ${metrics?.pm25 ?? "-"}<br>
-        PM10: ${metrics?.pm10 ?? "-"}<br>
-        AQI: ${metrics?.aqi ?? "-"}
-      `);
+        <Overlay name="Weather" checked>
+          <LayerGroup>
+            <MarkerClusterGroup>
+              {weatherData.features.map((feature, i) => {
+                const marker = { ...feature, properties: { ...feature.properties, type: "weather" } };
+                return <MapMarker key={i} marker={marker} />;
+              })}
+            </MarkerClusterGroup>
+          </LayerGroup>
+        </Overlay>
 
-            weatherLayer.addLayer(circle);
-        });
-        weatherLayer.addTo(mapInstance);
+        <Overlay name="Traffic" checked>
+          <LayerGroup>
+            {trafficData.features.map((feature, i) => {
+              const { coordinates } = feature.geometry;
+              const props = feature.properties;
+              const speedRatio = props.current_speed / props.free_flow_speed;
+              let color = "#008000";
+              if (speedRatio < 0.7) color = "#FFA500";
+              if (speedRatio < 0.4) color = "#FF0000";
 
-        //Doctors Layer
-        const doctorsLayer = L.layerGroup();
-        doctorsData.features.forEach((feature) => {
-            const { coordinates } = feature.geometry;
-            const props = feature.properties;
+              if (coordinates.length >= 2) {
+                const latlngs = coordinates.map(([lon, lat]) => [lat, lon]);
+                return <Polyline key={i} positions={latlngs} pathOptions={{ color, weight: 5, opacity: 0.7 }} />;
+              } else {
+                return (
+                  <CircleMarker
+                    key={i}
+                    center={[coordinates[1], coordinates[0]]}
+                    radius={8}
+                    pathOptions={{ color, fillColor: color, fillOpacity: 0.8 }}
+                  />
+                );
+              }
+            })}
+          </LayerGroup>
+        </Overlay>
 
-            const marker = L.circleMarker([coordinates[1], coordinates[0]], {
-                radius: 10,
-                fillColor: "#FF69B4",
-                color: "#000",
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8,
-            }).bindPopup(`
-        <b>${props.place}</b><br>
-        Provider: ${props.provider}<br>
-        Address: ${props.address}<br>
-        Phone: ${props.phone}<br>
-        Service: ${props.service}<br>
-        Waiting days: ${props.waiting_days}<br>
-        Queue date: ${props.queue_date}
-      `);
+        <Overlay name="Bikes" checked>
+          <LayerGroup>
+            <MarkerClusterGroup>
+              {bikesData.features.map((bike, i) => (
+                <MapMarker key={i} marker={bike} />
+              ))}
+            </MarkerClusterGroup>
+          </LayerGroup>
+        </Overlay>
 
-            doctorsLayer.addLayer(marker);
-        });
-        doctorsLayer.addTo(mapInstance);
-
-        //Traffic Layer
-        const trafficLayer = L.layerGroup();
-        trafficData.features.forEach((feature) => {
-            const { coordinates } = feature.geometry;
-            const props = feature.properties;
-
-            // TODO: create a line based on speed
-            const speedRatio = props.current_speed / props.free_flow_speed;
-            let color = "#008000";
-            if (speedRatio < 0.7) color = "#FFA500";
-            if (speedRatio < 0.4) color = "#FF0000";
-
-            const circle = L.circleMarker([coordinates[1], coordinates[0]], {
-                radius: 12,
-                fillColor: color,
-                color: "#000",
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8,
-            }).bindPopup(`
-        <b>${props.location_name}</b><br>
-        Current speed: ${props.current_speed} km/h<br>
-        Free flow speed: ${props.free_flow_speed} km/h<br>
-        Confidence: ${props.confidence}<br>
-        Source: ${props.source}
-      `);
-
-            trafficLayer.addLayer(circle);
-        });
-        trafficLayer.addTo(mapInstance);
-
-
-        //Bikes Layer
-        const bikesLayer = L.layerGroup();
-        bikesData.features.forEach((feature) => {
-            const { coordinates } = feature.geometry;
-            const props = feature.properties;
-
-            let color = "#640000ff";
-            if (props.bikes_available >= 5 && props.bikes_available < 10) color = "#FFA500";
-            if (props.bikes_available >= 10) color = "#00ff00ff";
-
-            const marker = L.circleMarker([coordinates[1], coordinates[0]], {
-                radius: 10,
-                fillColor: color,
-                color: "#000",
-                weight: 1,
-                opacity: 1,
-                fillOpacity: 0.8
-            }).bindPopup(`
-    <b>${props.name}</b><br>
-    City: ${props.city}<br>
-    Bikes available: ${props.bikes_available}<br>
-    Docks available: ${props.docks_available}<br>
-    System: ${props.system_brand}<br>
-    Rental key: ${props.rental_key}<br>
-    Spot ID: ${props.spot_id}
-  `);
-
-            bikesLayer.addLayer(marker);
-        });
-
-        bikesLayer.addTo(mapInstance);
-
-        //Filtering by layers
-        L.control.layers(
-            null,
-            {
-                Weather: weatherLayer,
-                Doctors: doctorsLayer,
-                Traffic: trafficLayer,
-                Bikes: bikesLayer
-            },
-            { collapsed: false }
-        ).addTo(mapInstance);
-
-        return () => {
-            if (mapInstance) {
-                mapInstance.remove();
-                mapInstance = null;
-            }
-        };
-    }, []);
-
-    return <div id="map" style={{ width: "100%", height: "100vh" }} />;
+      </LayersControl>
+    </MapContainer>
+  );
 }

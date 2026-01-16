@@ -1,0 +1,34 @@
+{
+  "type": "point | line | area | heatmap",
+
+  "geometry": [
+  ],
+
+  "metadata": {
+    "title": "string (optional)",
+    "description": "string (optional)",
+    "icon": "string (optional)",
+    "iconUrl": "string (optional)",
+
+    "numbers": [
+      {
+        "label": "string",
+        "value": "number",
+        "unit": "string (optional)"
+      }
+    ],
+
+    "strings": [
+      {
+        "label": "string",
+        "value": "string"
+      }
+    ],
+
+    "scale": {
+      "value": 0.0,
+      "label": "string (optional)",
+      "colorScheme": "string (optional)"
+    }
+  }
+}

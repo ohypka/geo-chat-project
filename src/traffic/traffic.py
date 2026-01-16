@@ -28,11 +28,17 @@ def get_traffic_flow(lat: float, lon: float) -> dict:
     return resp.json()
 
 
-def normalize_traffic_data(lat: float, lon: float, name: str | None = None) -> dict:
+def normalize_traffic_data(lat: float, lon: float, name: str | None = None,raw_data=None) -> dict:
     data = get_traffic_flow(lat, lon)
     flow_segment = data.get("flowSegmentData", {})
 
     ts = datetime.now(timezone.utc).isoformat()
+    if raw_data is None:
+        raw_data = get_traffic_flow(lat, lon)
+    flow_segment = raw_data.get("flowSegmentData", {})
+    coordinates = flow_segment.get("coordinates", {}).get("coordinate", [])
+    coords_list = [[c["longitude"], c["latitude"]] for c in coordinates]
+
     current_speed = flow_segment.get("currentSpeed")
     free_flow_speed = flow_segment.get("freeFlowSpeed")
     confidence = flow_segment.get("confidence")
@@ -45,6 +51,7 @@ def normalize_traffic_data(lat: float, lon: float, name: str | None = None) -> d
             "lon": lon,
             "name": name,
         },
+        "coordinates": coords_list,
         "timestamp": ts,
         "metrics": {
             "current_speed": current_speed,
