@@ -19,7 +19,7 @@ export default function Composer({ onSend }: { onSend: (text: string) => void })
           onChange={(e) => setText(e.target.value)}
           placeholder="Napisz wiadomość…"
           rows={1}
-          className="flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-neutral-500"
+          className="flex-1 resize-none self-center bg-transparent text-sm outline-none placeholder:text-neutral-500"
           onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
