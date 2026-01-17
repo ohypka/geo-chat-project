@@ -113,6 +113,8 @@ async def chat_endpoint(request: ChatRequest):
                 "parts": [{"text": text}]
             })
 
+    map_data = None
+
     try:
         # Tworzenie czatu na konkretnym modelu
         chat = client.chats.create(
@@ -154,6 +156,7 @@ async def chat_endpoint(request: ChatRequest):
             print(f"AI DECYZJA: {fn_name} {args}")
             ai_summary_data = {}
             manual_fallback_text = ""
+            map_data = {"features": []}
             final_lat = float(request.lat)
             final_lon = float(request.lon)
 
@@ -170,6 +173,7 @@ async def chat_endpoint(request: ChatRequest):
                         print(f"SUKCES: Nowy punkt: {final_lat}, {final_lon}")
                     else:
                         print("OSTRZEŻENIE: Nie znaleziono ulicy.")
+                        map_data = None
 
                 elif target_city and target_city.lower() != "warsaw" and fn_name != "get_bikes":
                     coords = get_coordinates(target_city)
@@ -181,10 +185,24 @@ async def chat_endpoint(request: ChatRequest):
                     ai_summary_data = weather_provider.get_data(search_loc).metrics
                     manual_fallback_text = f"Pogoda dla {target_city} została pobrana."
 
+                    map_data["features"].append({
+                        "geometry": {"coordinates": [final_lon, final_lat]},
+                        "properties": ai_summary_data
+                    })
+
+                    print(map_data["features"])
+
                 elif fn_name == "get_doctors":
                     data = doctors_provider.get_data(search_loc, service_name=args.get("specialization"))
                     ai_summary_data = {"found": data.metrics.get('facilities_count', 0)}
                     manual_fallback_text = f"Znalazłem {ai_summary_data['found']} placówek."
+
+                    results = data.metadata.get("results", [])
+                    for doc in results:
+                        map_data["features"].append({
+                            "geometry": {"coordinates": [final_lon, final_lat]},
+                            "properties": doc
+                        })
 
                 elif fn_name == "get_bikes":
                     data = bikes_provider.get_data(search_loc)
@@ -195,9 +213,25 @@ async def chat_endpoint(request: ChatRequest):
                     print(f"WYNIK API: {st_name} ({st_dist}km), Rowerów: {st_bikes}")
                     manual_fallback_text = f"Najbliższa stacja: {st_name} ({st_dist} km). Rowerów: {st_bikes}."
 
+                    for feature in data.raw.get("features", []):
+                        coords = feature.get("geometry", {}).get("coordinates", [0, 0])
+                        map_data["features"].append({
+                            "geometry": {"coordinates": coords},
+                            "properties": feature.get("properties", {})
+                        })
+
                 elif fn_name == "get_traffic":
-                    ai_summary_data = traffic_provider.get_data(search_loc).metrics
+                    data = traffic_provider.get_data(search_loc)
+                    ai_summary_data = data.metrics
                     manual_fallback_text = "Pobrałem dane o ruchu."
+
+                    for feature in data.raw.get("features", []):
+                        map_data["features"].append({
+                            "geometry": feature["geometry"],
+                            "properties": feature.get("properties", {})
+                        })
+
+                    print(map_data["features"])
 
             except Exception as e:
                 print(f"BŁĄD NARZĘDZIA: {e}")
@@ -218,6 +252,16 @@ async def chat_endpoint(request: ChatRequest):
             if not response_text:
                 print(" AI ZAMILKŁO - Fallback.")
                 response_text = manual_fallback_text
+
+            return {
+                "response": response_text,
+                "layerType": fn_name.replace("get_", ""),
+                "mapData": map_data,
+                "mapCenter": {
+                    "lat": final_lat,
+                    "lon": final_lon
+                }
+            }
 
         else:
             response_text = part.text
