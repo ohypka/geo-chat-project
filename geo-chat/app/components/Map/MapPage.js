@@ -6,6 +6,6 @@ const MapComponent = dynamic(() => import("./MapComponent"), {
   ssr: false
 });
 
-export default function MapPage() {
-  return <MapComponent />;
+export default function MapPage({mapData, layerType}) {
+  return <MapComponent mapData={mapData} layerType={layerType}/>;
 }
