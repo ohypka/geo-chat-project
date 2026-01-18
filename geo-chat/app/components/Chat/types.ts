@@ -7,7 +7,6 @@ type BaseMsg = {
   content?: string;
   mapData?: any;
   layerType?: string;
-  mapCenter?: { lat: number; lon: number };
   title?: string;
   subtitle?: string;
 };

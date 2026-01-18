@@ -123,8 +123,7 @@ async function sendMessage(text: string) {
                 content: data.response || "Brak odpowiedzi.",
                 title: data.layerType ? `Mapa: ${data.layerType}` : undefined,
                 mapData: data.mapData,
-                layerType: data.layerType,
-                mapCenter: data.mapCenter
+                layerType: data.layerType
             };
 
             setMessagesByThread((prev) => ({

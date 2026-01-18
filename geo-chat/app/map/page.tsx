@@ -1,7 +1,12 @@
+"use client";
 import Link from "next/link";
-import MapPage from "../components/Map/page";
+import MapPage from "../components/Map/MapPage";
+import {useContext} from "react";
+import ChatContext from "../context/ChatContext";
 
 export default function Page() {
+  const context = useContext(ChatContext);
+
   return (
     <div className="h-screen w-screen bg-neutral-950 text-neutral-100">
       <header className="flex items-center justify-between border-b border-neutral-800 bg-neutral-950/70 px-4 py-3 backdrop-blur">
@@ -35,7 +40,16 @@ export default function Page() {
       </header>
 
       <div className="h-[calc(100vh-56px)]">
-        <MapPage />
+        {context?.mapData ? (
+            <MapPage
+                mapData={context.mapData}
+                layerType={context.layerType || "default"}
+            />
+        ) : (
+            <div className="flex h-full items-center justify-center text-neutral-500">
+              Ładowanie danych mapy...
+            </div>
+        )}
       </div>
     </div>
   );

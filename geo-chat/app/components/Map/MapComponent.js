@@ -1,19 +1,15 @@
 "use client";
 
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, LayersControl, LayerGroup, Polyline, CircleMarker } from "react-leaflet";
 import MarkerClusterGroup from 'react-leaflet-markercluster';
 import MapMarker from "../markers/DoctorMarker.js";
 import "leaflet/dist/leaflet.css";
-import ChatContext from "../../context/ChatContext"
 
 const { Overlay } = LayersControl;
 
-export default function MapComponent({interactive=true}) {
+export default function MapComponent({mapData, layerType,interactive=true}) {
     const [isClient, setIsClient] = useState(false);
-
-    const context = useContext(ChatContext);
-    const { mapCenter, mapData,layerType} = context;
 
     useEffect(() => setIsClient(true), []);
     if (!isClient) return null;
@@ -21,7 +17,7 @@ export default function MapComponent({interactive=true}) {
     const features = mapData?.features || [];
     const type = layerType?.toLowerCase();
 
-    const center = mapCenter ? [mapCenter.lat, mapCenter.lon] : [52.2297, 21.0122];
+    const center = mapData.center ? [mapData.center[0], mapData.center[1]] : [52.2297, 21.0122];
 
   return (
       <MapContainer
@@ -90,7 +86,7 @@ export default function MapComponent({interactive=true}) {
                 return (
                     <CircleMarker
                         key={`traffic-point-${i}`}
-                        center={[coordinates[1], coordinates[0]]}
+                        center={center}
                         radius={8}
                         pathOptions={{ color, fillColor: color, fillOpacity: 0.8 }}
                     />

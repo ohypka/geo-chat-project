@@ -173,7 +173,10 @@ async def chat_endpoint(request: ChatRequest):
                         print(f"SUKCES: Nowy punkt: {final_lat}, {final_lon}")
                     else:
                         print("OSTRZEŻENIE: Nie znaleziono ulicy.")
-                        map_data = None
+                        return {
+                            "response": f"Nie znaleziono ulicy '{raw_street}' w {target_city}.",
+                            "mapData": None
+                        }
 
                 elif target_city and target_city.lower() != "warsaw" and fn_name != "get_bikes":
                     coords = get_coordinates(target_city)
@@ -253,14 +256,14 @@ async def chat_endpoint(request: ChatRequest):
                 print(" AI ZAMILKŁO - Fallback.")
                 response_text = manual_fallback_text
 
+            if map_data["features"]:
+                map_data["center"] = [final_lat, final_lon]
+            else: map_data=None
+
             return {
                 "response": response_text,
                 "layerType": fn_name.replace("get_", ""),
-                "mapData": map_data,
-                "mapCenter": {
-                    "lat": final_lat,
-                    "lon": final_lon
-                }
+                "mapData": map_data
             }
 
         else:
