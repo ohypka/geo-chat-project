@@ -95,7 +95,7 @@ class DoctorsProvider(BaseProvider):
         url = (
             f"{NFZ_BASE_URL}?case={case}"
             f"&province={location_info['province_code']}"
-            f"&locality={quote(location_info['city'].capitalize())}"
+            #f"&locality={quote(location_info['city'].capitalize())}"
             f"&benefit={quote(service_name)}"
             f"&format=json"
         )
