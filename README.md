@@ -1,3 +1,151 @@
+# Geo Chat - Universal Geographic Data Framework
+
+**Universal Python framework for collecting and standardizing geographic data from any API.**
+
+Geo Chat provides a plugin-based architecture that allows you to:
+- **Create custom providers** for any API with geographic data
+- **Unify data format** across different sources
+- **Use built-in providers** for weather, healthcare, and more
+- **Process data in batches** with consistent error handling
+
+## Key Features
+
+- **Universal Framework**: Create providers for any API with location-based data
+- **Unified Format**: All providers return data in the same standardized format
+- **Plugin System**: Easy registration and discovery of providers
+- **Batch Processing**: Handle multiple locations efficiently
+- **Built-in Providers**: Weather, doctors availability, and more
+- **Type Safe**: Built with Pydantic for data validation
+
+## Installation
+
+```bash
+# Install the package
+pip install -e .
+
+# Or with API dependencies (for FastAPI servers)
+pip install -e ".[api]"
+```
+
+## Quick Start
+
+### Using Built-in Providers
+
+```python
+from geo_chat import create_provider, Location
+
+# Create a provider
+weather_provider = create_provider("weather", api_key="your_key")
+
+# Fetch data
+location = Location(lat=52.2297, lon=21.0122, name="Warsaw")
+data = weather_provider.get_data(location)
+
+print(f"Temperature: {data.metrics['temperature']}°C")
+print(f"Category: {data.category}")
+print(f"Source: {data.source}")
+```
+
+### Creating Your Own Provider
+
+```python
+from geo_chat.core import BaseProvider, Location, DataPoint, register_provider
+
+@register_provider(name="my_api", category="custom")
+class MyAPIProvider(BaseProvider):
+    def fetch(self, location: Location, **options):
+        # Make your API call here
+        response = requests.get("https://api.example.com/data", params={
+            "lat": location.lat,
+            "lon": location.lon
+        })
+        return response.json()
+    
+    def normalize(self, raw_data, location: Location):
+        # Transform to standard format
+        return DataPoint(
+            category=self.category,
+            source=self.name,
+            location=location,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+            metrics={
+                "value": raw_data.get("value"),
+            }
+        )
+
+# Use it
+provider = create_provider("my_api")
+data = provider.get_data(Location(lat=52.2297, lon=21.0122))
+```
+
+See [docs/CREATING_PROVIDERS.md](docs/CREATING_PROVIDERS.md) for complete guide.
+
+## Project Structure
+
+```
+geo-chat-project/
+├── geo_chat/              # Main package
+│   ├── core/             # Framework core
+│   │   ├── base.py       # BaseProvider class
+│   │   ├── models.py     # DataPoint, Location models
+│   │   ├── registry.py   # Provider registry
+│   │   └── factory.py    # Provider factory
+│   ├── providers/        # Built-in providers
+│   │   ├── weather.py    # Weather provider
+│   │   └── doctors.py    # Doctors provider
+│   └── __init__.py
+├── examples/             # Usage examples
+│   ├── framework_usage.py
+│   └── custom_provider.py
+├── docs/                 # Documentation
+│   └── CREATING_PROVIDERS.md
+└── src/                  # Legacy code (for API servers)
+```
+
+## Documentation
+
+- **[Creating Providers](docs/CREATING_PROVIDERS.md)** - Complete guide to creating custom providers
+- **[Installation Guide](INSTALLATION.md)** - Detailed installation instructions
+- **[Examples](examples/)** - Working code examples
+
+## Built-in Providers
+
+- **Weather** (`weather`) - OpenWeatherMap API for weather and air quality
+- **Doctors** (`doctors`) - NFZ API for Polish healthcare availability
+
+More providers coming soon!
+
+## Why This Framework?
+
+Instead of writing custom code for each API, you can:
+
+1. **Create a provider once** - Implement `fetch()` and `normalize()`
+2. **Use unified format** - All data comes in the same `DataPoint` structure
+3. **Reuse infrastructure** - Batch processing, error handling, caching
+4. **Easy integration** - Same code works with any provider
+
+## Example: Multiple Providers, Same Code
+
+```python
+from geo_chat import create_provider, Location
+
+location = Location(lat=52.2297, lon=21.0122, name="Warsaw")
+
+# Different providers, same interface
+weather = create_provider("weather", api_key="key1")
+doctors = create_provider("doctors")
+
+# Same method, different data
+weather_data = weather.get_data(location)
+doctors_data = doctors.get_data(location, service_name="kardiolog")
+
+# Same structure
+for data in [weather_data, doctors_data]:
+    print(f"{data.category}: {data.metrics}")
+```
+
+---
+
 # Environment Module (Weather and Air Quality)
 Module for collecting and standardizing environmental data such as temperature, humidity, pressure, air quality (PM2.5, PM10, AQI) and hourly forecasts.  
 Uses OpenWeatherMap API and provides unified JSON output for map visualization.
