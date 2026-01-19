@@ -1,25 +1,24 @@
 "use client";
 import { createContext, useState, ReactNode } from "react";
-import { Msg } from "../components/Chat/types";
 
 type ChatContextType = {
-    messages: Msg[];
-    setMessages: (msgs: Msg[]) => void;
     mapData?: any;
     setMapData: (data: any) => void;
     layerType?: string;
     setLayerType: (type: string) => void;
+    mapOpen: boolean;
+    setMapOpen: (v: boolean) => void;
 };
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export const ChatContextProvider = ({ children }: { children: ReactNode }) => {
-    const [messages, setMessages] = useState<Msg[]>([]);
     const [mapData, setMapData] = useState<any>();
     const [layerType, setLayerType] = useState<string>();
+    const [mapOpen, setMapOpen] = useState(false);
 
     return (
-        <ChatContext.Provider value={{ messages, setMessages, mapData, setMapData,layerType, setLayerType }}>
+        <ChatContext.Provider value={{ mapData, setMapData,layerType, setLayerType, mapOpen, setMapOpen }}>
             {children}
         </ChatContext.Provider>
     );

@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useContext } from "react";
 import Sidebar from "./Sidebar";
 import ChatWindow from "./ChatWindow";
 import type { Msg, Thread } from "./types";
+import ChatContext from "../../context/ChatContext";
+import MapComponent from "../Map/MapComponent";
 
 const initialThreads: Thread[] = [
     { id: "t1", title: "Mapa: pogoda + jakość powietrza" },
@@ -28,6 +30,7 @@ export default function ChatShell() {
     const [activeThreadId, setActiveThreadId] = useState<string>(initialThreads[0]?.id ?? "");
     const [messagesByThread, setMessagesByThread] = useState<Record<string, Msg[]>>(initialMessagesByThread);
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const context = useContext(ChatContext);
 
     const activeMessages = useMemo(() => {
         return messagesByThread[activeThreadId] ?? [];
@@ -147,8 +150,8 @@ async function sendMessage(text: string) {
     }
 
     return (
-        <div className="h-screen w-screen bg-neutral-950 text-neutral-100">
-            <div className="flex h-full">
+        <div className="h-screen w-screen bg-neutral-950 text-neutral-100 relative overflow-hidden">
+            <div className={context?.mapOpen ? "hidden" : "flex h-full"}>
                 <Sidebar
                     open={sidebarOpen}
                     setOpen={setSidebarOpen}
@@ -169,6 +172,51 @@ async function sendMessage(text: string) {
                     />
                 </main>
             </div>
+
+            {context?.mapOpen && (
+                <div className="h-screen w-screen bg-neutral-950 text-neutral-100">
+                    <header className="flex items-center justify-between border-b border-neutral-800 bg-neutral-950/70 px-4 py-3 backdrop-blur">
+                        <button
+                            onClick={() => context.setMapOpen(false)}
+                            className="inline-flex h-9 w-9 items-center justify-center rounded-lg hover:bg-neutral-800 transition"
+                            title="Wróć do czatu"
+                        >
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="18"
+                                height="18"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="text-neutral-200"
+                            >
+                                <path d="M15 18l-6-6 6-6"/>
+                            </svg>
+                        </button>
+
+                        <div className="text-xs text-neutral-400">
+                            Widok mapy
+                        </div>
+                        <div className="h-9 w-9" />
+                    </header>
+
+                    <div className="h-[calc(100vh-56px)]">
+                        {context.mapData ? (
+                            <MapComponent
+                                mapData={context.mapData}
+                                layerType={context.layerType || "default"}
+                            />
+                        ) : (
+                            <div className="flex h-full items-center justify-center text-neutral-500">
+                                Ładowanie danych mapy...
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

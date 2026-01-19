@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import MiniMapPreview from "./MiniMapPreview";
 import type { Msg } from "./types";
 import ChatContext from "../../context/ChatContext"
@@ -28,15 +27,15 @@ export default function MessageBubble({ message }: { message: Msg }) {
                 )}
 
                     {message.mapData &&
-                        <Link
-                            href="/map"
+                        <div
                             onClick={() => {
                                 context?.setMapData(message.mapData);
                                 context?.setLayerType(message.layerType || "default");
+                                context?.setMapOpen(true);
                             }}
                         className={[
                             "block max-w-[85%] rounded-2xl border border-neutral-800 bg-neutral-900 px-4 py-3",
-                            "hover:border-neutral-700 hover:bg-neutral-900/80 transition",
+                            "hover:border-neutral-700 hover:bg-neutral-900/80 transition cursor-pointer",
                         ].join(" ")}
                         title="Otwórz mapę">
                         <MiniMapPreview
@@ -45,7 +44,7 @@ export default function MessageBubble({ message }: { message: Msg }) {
                             mapData={message.mapData}
                             layerType={message.layerType}
                         />
-                    </Link>
+                    </div>
                     }
 
                 </div>
