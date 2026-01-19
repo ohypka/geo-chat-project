@@ -38,8 +38,6 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 client = genai.Client(api_key=GOOGLE_API_KEY) if GOOGLE_API_KEY else None
 
 # --- KONFIGURACJA MODELU NA SZTYWNO ---
-# Ustawiam Gemini 2.0 Flash (najnowszy dostępny).
-# Jeśli Google wypuści 2.5, wystarczy zmienić ten string.
 TARGET_MODEL = "gemini-2.5-flash"
 
 # --- PROVIDERY ---
@@ -53,7 +51,7 @@ traffic_provider = create_provider("traffic", api_key=os.getenv("TOMTOM_API_KEY"
 def get_weather(city: str): pass
 
 
-def get_doctors(specialization: str, city: str): pass
+def get_doctors(specialization: str, city: str, street: str = None, limit: int = 5): pass
 
 
 def get_bikes(city: str, location_query: str = None): pass
@@ -196,14 +194,48 @@ async def chat_endpoint(request: ChatRequest):
                     print(map_data["features"])
 
                 elif fn_name == "get_doctors":
-                    data = doctors_provider.get_data(search_loc, service_name=args.get("specialization"))
+
+                    limit_val = args.get("limit", 5)
+                    data = doctors_provider.get_data(search_loc, service_name=args.get("specialization"), limit= limit_val)
                     ai_summary_data = {"found": data.metrics.get('facilities_count', 0)}
                     manual_fallback_text = f"Znalazłem {ai_summary_data['found']} placówek."
 
                     results = data.metadata.get("results", [])
+                    print(f"Rozpoczynam geokodowanie {len(results)} adresów...")
+
                     for doc in results:
+                        doc_lat, doc_lon = final_lat, final_lon
+
+                        # ZMIANA 1: Pobieramy surowe miasto
+                        raw_city = doc.get('locality') or target_city
+
+                        # ZMIANA 2: Czyścimy miasto (usuwamy wszystko po myślniku, np. "-Psie Pole")
+                        if raw_city:
+                            doc_city = raw_city.split('-')[0].strip()
+                        else:
+                            doc_city = target_city
+
+                        # ZMIANA 3: Czyścimy adres i usuwamy numery lokali (np. "2-2A" -> "2")
+                        # To prosta heurystyka: bierzemy adres, usuwamy "ul."
+                        doc_addr = doc.get('address', '')
+                        clean_addr = clean_street_name(doc_addr)
+
+                        # Opcjonalnie: Jeśli adres zawiera "/", bierzemy tylko to co przed nim (numer budynku)
+                        if clean_addr:
+                            clean_addr = clean_addr.split('/')[0].strip()
+
+                        if clean_addr:
+                            # Próbujemy geokodować z wyczyszczonym miastem (np. "Wrocław", a nie "Wrocław-Psie Pole")
+                            exact_coords = get_coordinates(doc_city, clean_addr)
+
+                            if exact_coords:
+                                doc_lat, doc_lon = float(exact_coords[0]), float(exact_coords[1])
+                                print(f" -> Namierzono: {clean_addr}, {doc_city} ({doc_lat}, {doc_lon})")
+                            else:
+                                print(f" -> Nie znaleziono: {clean_addr}, {doc_city}")
+
                         map_data["features"].append({
-                            "geometry": {"coordinates": [final_lon, final_lat]},
+                            "geometry": {"coordinates": [doc_lon, doc_lat]},
                             "properties": doc
                         })
 
