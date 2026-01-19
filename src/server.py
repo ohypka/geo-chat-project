@@ -24,7 +24,7 @@ except ImportError:
 
 load_dotenv()
 
-app = FastAPI(title="Geo Chat – Gemini 2.0 Flash")
+app = FastAPI(title="Geo Chat")
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,7 +38,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 client = genai.Client(api_key=GOOGLE_API_KEY) if GOOGLE_API_KEY else None
 
 # --- KONFIGURACJA MODELU NA SZTYWNO ---
-TARGET_MODEL = "gemini-2.5-flash"
+TARGET_MODEL = "gemini-2.5-flash-lite"
 
 # --- PROVIDERY ---
 weather_provider = create_provider("weather", api_key=os.getenv("OPENWEATHER_API_KEY"))
@@ -63,10 +63,11 @@ def get_traffic(city: str, street: str): pass
 tools_list = [get_weather, get_doctors, get_bikes, get_traffic]
 
 SYSTEM_INSTRUCTION = (
-    "Jesteś inteligentnym asystentem Geo Chat. "
-    "1. Pamiętaj kontekst rozmowy. "
-    "2. Używaj narzędzi do pobierania danych. "
-    "3. Odpowiadaj krótko i konkretnie po polsku."
+    "Jesteś pomocnym asystentem medycznym i geograficznym Geo Chat. "
+    "1. Gdy otrzymasz dane z narzędzi (np. o lekarzach), NIE wypisuj ich suchą listą. "
+    "2. Przeanalizuj je i napisz użytkownikowi rekomendację pełnym zdaniem. "
+    "3. Wspomnij o czasie oczekiwania i lokalizacji (np. 'Najszybciej dostaniesz się do...'). "
+    "4. Mów po polsku, bądź uprzejmy i konkretny."
 )
 
 
@@ -193,52 +194,109 @@ async def chat_endpoint(request: ChatRequest):
 
                     print(map_data["features"])
 
+
                 elif fn_name == "get_doctors":
 
+                    # Pobranie limitu i danych (zgodnie z Twoim kodem)
+
                     limit_val = args.get("limit", 5)
-                    data = doctors_provider.get_data(search_loc, service_name=args.get("specialization"), limit= limit_val)
-                    ai_summary_data = {"found": data.metrics.get('facilities_count', 0)}
-                    manual_fallback_text = f"Znalazłem {ai_summary_data['found']} placówek."
+
+                    data = doctors_provider.get_data(
+
+                        search_loc,
+
+                        service_name=args.get("specialization"),
+
+                        limit=limit_val
+
+                    )
+
+                    # 1. Tworzymy listę, żeby AI wiedziało CO znalazło (inaczej będzie tylko liczba)
+
+                    results_for_ai = []
 
                     results = data.metadata.get("results", [])
+
                     print(f"Rozpoczynam geokodowanie {len(results)} adresów...")
 
                     for doc in results:
+
                         doc_lat, doc_lon = final_lat, final_lon
 
-                        # ZMIANA 1: Pobieramy surowe miasto
+                        # --- TWOJA SEKCJA CZYSZCZENIA DANYCH (ZACHOWANA) ---
+
                         raw_city = doc.get('locality') or target_city
 
-                        # ZMIANA 2: Czyścimy miasto (usuwamy wszystko po myślniku, np. "-Psie Pole")
                         if raw_city:
+
                             doc_city = raw_city.split('-')[0].strip()
+
                         else:
+
                             doc_city = target_city
 
-                        # ZMIANA 3: Czyścimy adres i usuwamy numery lokali (np. "2-2A" -> "2")
-                        # To prosta heurystyka: bierzemy adres, usuwamy "ul."
                         doc_addr = doc.get('address', '')
+
                         clean_addr = clean_street_name(doc_addr)
 
-                        # Opcjonalnie: Jeśli adres zawiera "/", bierzemy tylko to co przed nim (numer budynku)
                         if clean_addr:
                             clean_addr = clean_addr.split('/')[0].strip()
 
+                        # ---------------------------------------------------
+
                         if clean_addr:
-                            # Próbujemy geokodować z wyczyszczonym miastem (np. "Wrocław", a nie "Wrocław-Psie Pole")
+
+                            # Próbujemy geokodować z wyczyszczonym miastem
+
                             exact_coords = get_coordinates(doc_city, clean_addr)
 
                             if exact_coords:
+
                                 doc_lat, doc_lon = float(exact_coords[0]), float(exact_coords[1])
+
                                 print(f" -> Namierzono: {clean_addr}, {doc_city} ({doc_lat}, {doc_lon})")
+
                             else:
+
                                 print(f" -> Nie znaleziono: {clean_addr}, {doc_city}")
 
-                        map_data["features"].append({
-                            "geometry": {"coordinates": [doc_lon, doc_lat]},
-                            "properties": doc
+                        # 2. Dodajemy te wyczyszczone dane do listy dla AI
+
+                        # Dzięki temu AI przeczyta poprawne nazwy ulic i czas oczekiwania
+
+                        results_for_ai.append({
+
+                            "nazwa": doc.get("provider"),
+
+                            "adres": f"{clean_addr}, {doc_city}",
+
+                            "czas_oczekiwania": f"{doc.get('waiting_days')} dni",
+
+                            "telefon": doc.get("phone")
+
                         })
 
+                        # Dodajemy punkt do mapy
+
+                        map_data["features"].append({
+
+                            "geometry": {"coordinates": [doc_lon, doc_lat]},
+
+                            "properties": doc
+
+                        })
+
+                    # 3. Przekazujemy PEŁNE dane do AI (liczbę ORAZ listę miejsc)
+
+                    ai_summary_data = {
+
+                        "znaleziono": len(results),
+
+                        "lista_placówek": results_for_ai
+
+                    }
+
+                    manual_fallback_text = f"Pobrałem dane o {len(results)} placówkach."
                 elif fn_name == "get_bikes":
                     data = bikes_provider.get_data(search_loc)
                     ai_summary_data = data.metrics
