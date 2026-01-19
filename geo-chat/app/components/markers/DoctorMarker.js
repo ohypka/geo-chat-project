@@ -59,7 +59,7 @@ function renderValue(value, key) {
     return value?.toString();
 }
 
-export default function MapMarker({ marker }) {
+export default function MapMarker({ marker,showPopup = true }) {
     // Safety checks
     if (!marker || !marker.geometry || !marker.geometry.coordinates || marker.geometry.coordinates.length < 2 || !marker.properties) return null;
 
@@ -77,6 +77,7 @@ export default function MapMarker({ marker }) {
 
     return (
         <Marker position={[coordinates[1], coordinates[0]]} icon={icon}>
+            {showPopup &&
             <Popup>
                 <div style={{ textAlign: "center" }}>
                     <h3>{properties.place || properties.title || properties.name || properties.location?.name || "No Title"}</h3>
@@ -107,7 +108,7 @@ export default function MapMarker({ marker }) {
                         Action
                     </button>
                 </div>
-            </Popup>
+            </Popup>}
         </Marker>
     );
 }

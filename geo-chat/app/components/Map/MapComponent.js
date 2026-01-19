@@ -17,12 +17,12 @@ export default function MapComponent({mapData, layerType,interactive=true}) {
     const features = mapData?.features || [];
     const type = layerType?.toLowerCase();
 
-    const center = mapData.center ? [mapData.center[0], mapData.center[1]] : [52.2297, 21.0122];
+    const center = mapData.center ? (layerType==="doctors"? [features[0].geometry.coordinates[1],features[0].geometry.coordinates[0]] :[mapData.center[0], mapData.center[1]]) : [52.2297, 21.0122];
 
   return (
       <MapContainer
           center={center}
-          zoom={type==="traffic"?15:12}
+          zoom={13}
           style={{ width: "100%", height: "100%" }}
           zoomControl={interactive}
           attributionControl={interactive}
@@ -41,7 +41,7 @@ export default function MapComponent({mapData, layerType,interactive=true}) {
             <LayerGroup>
               <MarkerClusterGroup>
                 {type === "doctors" && features.map((doc, i) => (
-                    <MapMarker key={`doc-${i}`} marker={doc} />
+                    <MapMarker key={`doc-${i}`} marker={doc} showPopup={interactive}/>
                 ))}
               </MarkerClusterGroup>
             </LayerGroup>
@@ -51,7 +51,7 @@ export default function MapComponent({mapData, layerType,interactive=true}) {
             <LayerGroup>
               {type === "weather" && features.map((feature, i) => {
                 const marker = { ...feature, properties: { ...feature.properties, type: "weather" }};
-                return <MapMarker key={`weather-${i}`} marker={marker} />;
+                return <MapMarker key={`weather-${i}`} marker={marker} showPopup={interactive}/>;
               })}
             </LayerGroup>
           </Overlay>
@@ -61,7 +61,7 @@ export default function MapComponent({mapData, layerType,interactive=true}) {
                 <MarkerClusterGroup>
                     {type === "bikes" && features.map((bike, i) => {
                         const marker={...bike, properties:{...bike.properties, type:"bike"}};
-                        return <MapMarker key={`bike-${i}`} marker={marker} />;
+                        return <MapMarker key={`bike-${i}`} marker={marker} showPopup={interactive}/>;
                     })}
                 </MarkerClusterGroup>
 
