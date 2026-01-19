@@ -3,22 +3,52 @@ import L from "leaflet";
 
 // Base icons
 const iconMap = {
-    doctor: "/doctor.webp",
+    doctor: "/doctor.png",
     bike: "/bike.png",
     weather_sunny: "/sunny.png",
     weather_cloudy: "/cloudy.png",
     weather_rain: "/rain.png",
     weather_humid_hot: "/humid_hot.png", // placeholder for high temp + high humidity
-    default: "/doctor.webp",
+    default: "/doctor.png",
 };
 
 // Create Leaflet icon from URL
-function createIcon(url) {
+function createWeatherIcon(url,size=32) {
     return new L.Icon({
         iconUrl: url,
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size],
+        popupAnchor: [0, -size]
+    });
+}
+function createIcon({
+    url,
+    color = "#1E90FF",
+    size = 45
+}) {
+    return L.divIcon({
+        className: "",
+        html: `
+            <div style="
+                width:${size}px;
+                height:${size}px;
+                background:${color};
+                border-radius:50%;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                border:1px solid white;
+                box-shadow:0 0 6px rgba(0,0,0,0.4);
+            ">
+                <img src="${url}" style="
+                    width:${size * 0.7}px;
+                    height:${size * 0.7}px;
+                "/>
+            </div>
+        `,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size],
+        popupAnchor: [0, -size]
     });
 }
 
@@ -42,6 +72,19 @@ function chooseWeatherIcon(metrics) {
 
     return iconMap.weather_sunny;
 }
+
+function chooseBikeIcon(bikes_available) {
+    const url = iconMap.bike;
+    const color = bikes_available === 0 ? "#dd2828" : bikes_available>3? "#00c71b":"#e3b707";
+    return { url, color };
+}
+
+function chooseDoctorIcon(waiting_days) {
+    const url = iconMap.doctor;
+    const color = waiting_days < 5 ?"#00c71b" : waiting_days<14?"#e3b707" :"#dd2828" ;
+    return { url, color };
+}
+
 
 // Render values nicely
 function renderValue(value, key) {
@@ -69,10 +112,16 @@ export default function MapMarker({ marker,showPopup = true }) {
     // Decide icon
     let icon;
     if (properties.type === "weather") {
-        icon = createIcon(chooseWeatherIcon(properties.metrics));
+        const weatherUrl = chooseWeatherIcon(properties.metrics);
+        icon = createWeatherIcon(weatherUrl, 32);
+    } else if (properties.type === "bike") {
+        const bikeConfig = chooseBikeIcon(properties.bikes);
+        icon = createIcon(bikeConfig);
+    } else if (properties.type === "doctor") {
+        const doctorConfig=chooseDoctorIcon(properties.waiting_days)
+        icon = createIcon(doctorConfig);
     } else {
-        const type = properties.type || "doctor";
-        icon = createIcon(iconMap[type] || iconMap.default);
+        icon = createIcon({ url: iconMap.default});
     }
 
     return (

@@ -40,9 +40,10 @@ export default function MapComponent({mapData, layerType,interactive=true}) {
           <Overlay name="Doctors" checked={type === "doctors"}>
             <LayerGroup>
               <MarkerClusterGroup>
-                {type === "doctors" && features.map((doc, i) => (
-                    <MapMarker key={`doc-${i}`} marker={doc} showPopup={interactive}/>
-                ))}
+                {type === "doctors" && features.map((doc, i) => {
+                    const marker = { ...doc, properties: { ...doc.properties, type: "doctor" }};
+                    return <MapMarker key={`doc-${i}`} marker={marker} showPopup={interactive}/>
+                })}
               </MarkerClusterGroup>
             </LayerGroup>
           </Overlay>
@@ -73,14 +74,18 @@ export default function MapComponent({mapData, layerType,interactive=true}) {
               {type === "traffic" && features.map((feature, i) => {
                 const { coordinates } = feature.geometry;
                 const props = feature.properties;
-                const speedRatio = props.current_speed / props.free_flow_speed;
-                let color = "#008000";
-                if (speedRatio < 0.7) color = "#FFA500";
-                if (speedRatio < 0.4) color = "#FF0000";
+                let color;
+                if (props.congestion==="low") {
+                    color = "#008000";
+                } else if (props.congestion==="medium") {
+                    color = "#FFA500";
+                } else {
+                    color = "#FF0000";
+                }
 
                 if (feature.geometry.type === "LineString") {
                   const latlngs = coordinates.map(([lon, lat]) => [lat, lon]);
-                  return <Polyline key={`traffic-line-${i}`} positions={latlngs} pathOptions={{ color, weight: 5, opacity: 0.7 }}/>
+                  return <Polyline key={`traffic-line-${i}`} positions={latlngs} pathOptions={{ color, weight: 7, opacity: 0.8 }}/>
                 }
 
                 return (
