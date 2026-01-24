@@ -14,7 +14,7 @@ from ..core.registry import register_provider
 load_dotenv()
 
 # TomTom Traffic Flow Segment API
-BASE_TRAFFIC_URL = "https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json"
+BASE_TRAFFIC_URL = "https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/18/json"
 
 
 @register_provider(name="traffic", category="mobility")
@@ -43,7 +43,6 @@ class TrafficProvider(BaseProvider):
             "point": f"{location.lat},{location.lon}",
             "unit": "KMPH",  # Kilometry na godzinę
             "thickness": 10,  # Grubość segmentu
-            "zoom": 12  # Poziom przybliżenia dla segmentacji
         }
 
         resp = requests.get(BASE_TRAFFIC_URL, params=params, timeout=self.config.timeout)
