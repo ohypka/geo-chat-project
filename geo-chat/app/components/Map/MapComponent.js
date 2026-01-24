@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, LayersControl, LayerGroup, Polyline, CircleMarker } from "react-leaflet";
 import MarkerClusterGroup from 'react-leaflet-markercluster';
-import MapMarker from "../markers/DoctorMarker.js";
+import MapMarker from "../markers/MapMarker.js";
 import "leaflet/dist/leaflet.css";
+import MapLegend from "../Map/MapLegend";
 
 const { Overlay } = LayersControl;
 
@@ -77,7 +78,7 @@ export default function MapComponent({mapData, layerType,interactive=true}) {
                 let color;
                 if (props.congestion==="low") {
                     color = "#008000";
-                } else if (props.congestion==="medium") {
+                } else if (props.congestion==="moderate") {
                     color = "#FFA500";
                 } else {
                     color = "#FF0000";
@@ -101,6 +102,6 @@ export default function MapComponent({mapData, layerType,interactive=true}) {
           </Overlay>
 
         </LayersControl>
-      </MapContainer>
-  );
+          {interactive && <MapLegend type={type}/>}
+      </MapContainer>);
 }

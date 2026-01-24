@@ -13,7 +13,7 @@ const iconMap = {
 };
 
 // Create Leaflet icon from URL
-function createWeatherIcon(url,size=32) {
+function createWeatherIcon(url,size=35) {
     return new L.Icon({
         iconUrl: url,
         iconSize: [size, size],
@@ -24,7 +24,7 @@ function createWeatherIcon(url,size=32) {
 function createIcon({
     url,
     color = "#1E90FF",
-    size = 45
+    size = 35
 }) {
     return L.divIcon({
         className: "",
@@ -113,7 +113,7 @@ export default function MapMarker({ marker,showPopup = true }) {
     let icon;
     if (properties.type === "weather") {
         const weatherUrl = chooseWeatherIcon(properties.metrics);
-        icon = createWeatherIcon(weatherUrl, 32);
+        icon = createWeatherIcon(weatherUrl);
     } else if (properties.type === "bike") {
         const bikeConfig = chooseBikeIcon(properties.bikes);
         icon = createIcon(bikeConfig);
