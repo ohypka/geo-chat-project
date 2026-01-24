@@ -1,5 +1,6 @@
 import { Marker, Popup } from "react-leaflet";
 import L from "leaflet";
+import MarkerPopup from "./MarkerPopup";
 
 // Base icons
 const iconMap = {
@@ -87,7 +88,7 @@ function chooseDoctorIcon(waiting_days) {
 
 
 // Render values nicely
-function renderValue(value, key) {
+/*function renderValue(value, key) {
     if (Array.isArray(value)) {
         return value
             .map(v => (typeof v === "object" ? JSON.stringify(v, null, 2) : v))
@@ -100,7 +101,7 @@ function renderValue(value, key) {
         return JSON.stringify(value, null, 2);
     }
     return value?.toString();
-}
+}*/
 
 export default function MapMarker({ marker,showPopup = true }) {
     // Safety checks
@@ -112,7 +113,7 @@ export default function MapMarker({ marker,showPopup = true }) {
     // Decide icon
     let icon;
     if (properties.type === "weather") {
-        const weatherUrl = chooseWeatherIcon(properties.metrics);
+        const weatherUrl = chooseWeatherIcon(properties);
         icon = createWeatherIcon(weatherUrl);
     } else if (properties.type === "bike") {
         const bikeConfig = chooseBikeIcon(properties.bikes);
@@ -128,35 +129,7 @@ export default function MapMarker({ marker,showPopup = true }) {
         <Marker position={[coordinates[1], coordinates[0]]} icon={icon}>
             {showPopup &&
             <Popup>
-                <div style={{ textAlign: "center" }}>
-                    <h3>{properties.place || properties.title || properties.name || properties.location?.name || "No Title"}</h3>
-
-                    {/* Display all fields dynamically except 'type' */}
-                    {Object.entries(properties)
-                        .filter(([key]) => key !== "type")
-                        .map(([key, value]) => (
-                            <p key={key}>
-                                <span style={{ fontWeight: "bold" }}>{key.toUpperCase()}:</span>{" "}
-                                {renderValue(value, key)}
-                            </p>
-                        ))}
-
-                    <button
-                        onClick={() =>
-                            alert(`Action for ${properties.place || properties.title || properties.name || properties.location?.name || "this marker"}`)
-                        }
-                        style={{
-                            padding: "5px 10px",
-                            background: "#1E90FF",
-                            color: "white",
-                            border: "none",
-                            borderRadius: 4,
-                            marginTop: 5,
-                        }}
-                    >
-                        Action
-                    </button>
-                </div>
+                <MarkerPopup properties={properties}/>
             </Popup>}
         </Marker>
     );
