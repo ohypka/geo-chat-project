@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useContext } from "react";
 import MessageBubble from "./MessageBubble";
 import Composer from "./Composer";
 import type { Msg } from "./types";
+import ChatContext from "@/app/context/ChatContext";
 
 export default function ChatWindow({
                                        sidebarOpen,
@@ -20,9 +21,12 @@ export default function ChatWindow({
 }) {
     const bottomRef = useRef<HTMLDivElement | null>(null);
 
+    const context = useContext(ChatContext);
+    const isLoading = context?.isLoading;
+
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [messages.length]);
+    }, [messages.length, isLoading]);
 
     return (
         <div className="flex h-full flex-col">
@@ -77,6 +81,18 @@ export default function ChatWindow({
                     {messages.map((m) => (
                         <MessageBubble key={m.id} message={m} />
                     ))}
+
+                    {isLoading && (
+                        <div className="flex items-center gap-2 p-3 text-sm text-neutral-400 animate-pulse">
+                            <div className="flex space-x-1">
+                                <div className="h-1.5 w-1.5 bg-neutral-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                                <div className="h-1.5 w-1.5 bg-neutral-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                                <div className="h-1.5 w-1.5 bg-neutral-500 rounded-full animate-bounce"></div>
+                            </div>
+                            <span>Geo Chat analizuje dane i przygotowuje odpowiedź...</span>
+                        </div>
+                    )}
+
                     <div ref={bottomRef} />
                 </div>
             </div>

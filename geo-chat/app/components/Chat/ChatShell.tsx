@@ -5,7 +5,15 @@ import Sidebar from "./Sidebar";
 import ChatWindow from "./ChatWindow";
 import type { Msg, Thread } from "./types";
 import ChatContext from "../../context/ChatContext";
-import MapComponent from "../Map/MapComponent";
+import dynamic from "next/dynamic";
+const MapComponent = dynamic(() => import("../Map/MapComponent"), {
+    ssr: false,
+    loading: () => (
+        <div className="flex h-full items-center justify-center text-neutral-500 bg-neutral-900">
+            Ładowanie mapy...
+        </div>
+    ),
+});
 
 const initialThreads: Thread[] = [
     { id: "t1", title: "Mapa: pogoda + jakość powietrza" },
@@ -31,6 +39,7 @@ export default function ChatShell() {
     const [messagesByThread, setMessagesByThread] = useState<Record<string, Msg[]>>(initialMessagesByThread);
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const context = useContext(ChatContext);
+    const setIsLoading = context?.setIsLoading;
 
     const activeMessages = useMemo(() => {
         return messagesByThread[activeThreadId] ?? [];
@@ -70,6 +79,8 @@ export default function ChatShell() {
 
 async function sendMessage(text: string) {
         if (!activeThreadId) return;
+
+        if (setIsLoading) setIsLoading(true);
 
         // 1. Tworzymy wiadomość użytkownika
         const userMsg: Msg = {
@@ -146,6 +157,9 @@ async function sendMessage(text: string) {
                 ...prev,
                 [activeThreadId]: [...(prev[activeThreadId] ?? []), errorMsg],
             }));
+        } finally {
+            // 2. Wyłączamy stan ładowania niezależnie od wyniku
+            if (setIsLoading) setIsLoading(false);
         }
     }
 
