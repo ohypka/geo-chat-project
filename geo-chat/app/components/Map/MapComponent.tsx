@@ -3,13 +3,34 @@
 import { useState, useEffect } from "react";
 import { MapContainer, TileLayer, LayersControl, LayerGroup, Polyline, CircleMarker } from "react-leaflet";
 import MarkerClusterGroup from 'react-leaflet-markercluster';
-import MapMarker from "../markers/MapMarker.js";
+import MapMarker from "../markers/MapMarker";
 import "leaflet/dist/leaflet.css";
-import MapLegend from "../Map/MapLegend";
+import MapLegend from "./MapLegend";
+import { LatLngExpression } from "leaflet";
 
 const { Overlay } = LayersControl;
 
-export default function MapComponent({mapData, layerType,interactive=true}) {
+interface GeoFeature {
+    type: string;
+    geometry: {
+        type: string;
+        coordinates: any;
+    };
+    properties: any;
+}
+
+interface MapData {
+    features: GeoFeature[];
+    center?: [number, number];
+}
+
+interface MapComponentProps {
+    mapData: MapData;
+    layerType?: string;
+    interactive?: boolean;
+}
+
+export default function MapComponent({mapData, layerType,interactive=true}: MapComponentProps) {
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => setIsClient(true), []);
@@ -18,7 +39,7 @@ export default function MapComponent({mapData, layerType,interactive=true}) {
     const features = mapData?.features || [];
     const type = layerType?.toLowerCase();
 
-    const center = mapData.center ? (layerType==="doctors"? [features[0].geometry.coordinates[1],features[0].geometry.coordinates[0]] :[mapData.center[0], mapData.center[1]]) : [52.2297, 21.0122];
+    const center: LatLngExpression = mapData.center ? (layerType==="doctors"? [features[0].geometry.coordinates[1],features[0].geometry.coordinates[0]] :[mapData.center[0], mapData.center[1]]) : [52.2297, 21.0122];
 
   return (
       <MapContainer
@@ -85,7 +106,7 @@ export default function MapComponent({mapData, layerType,interactive=true}) {
                 }
 
                 if (feature.geometry.type === "LineString") {
-                  const latlngs = coordinates.map(([lon, lat]) => [lat, lon]);
+                  const latlngs = coordinates.map(([lon, lat]: [number, number]) => [lat, lon]);
                   return <Polyline key={`traffic-line-${i}`} positions={latlngs} pathOptions={{ color, weight: 7, opacity: 0.8 }}/>
                 }
 
@@ -102,6 +123,6 @@ export default function MapComponent({mapData, layerType,interactive=true}) {
           </Overlay>
 
         </LayersControl>
-          {interactive && <MapLegend type={type}/>}
+          {interactive && type && <MapLegend type={type}/>}
       </MapContainer>);
 }

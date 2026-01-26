@@ -1,6 +1,18 @@
 import { Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import MarkerPopup from "./MarkerPopup";
+import { Feature, Point } from "geojson";
+
+interface MarkerProps {
+    marker: {
+        geometry: {
+            type: string;
+            coordinates: [number, number];
+        };
+        properties: any;
+    };
+    showPopup?: boolean;
+}
 
 // Base icons
 const iconMap = {
@@ -14,7 +26,7 @@ const iconMap = {
 };
 
 // Create Leaflet icon from URL
-function createWeatherIcon(url,size=35) {
+function createWeatherIcon(url:string,size:number =35) {
     return new L.Icon({
         iconUrl: url,
         iconSize: [size, size],
@@ -26,7 +38,7 @@ function createIcon({
     url,
     color = "#1E90FF",
     size = 35
-}) {
+}: { url: string; color?: string; size?: number }) {
     return L.divIcon({
         className: "",
         html: `
@@ -54,7 +66,7 @@ function createIcon({
 }
 
 // Choose weather icon based on temperature & humidity
-function chooseWeatherIcon(metrics) {
+function chooseWeatherIcon(metrics:any) {
     if (!metrics) return iconMap.weather_sunny; // fallback
 
     const temp = metrics.temperature ?? 0;
@@ -74,13 +86,13 @@ function chooseWeatherIcon(metrics) {
     return iconMap.weather_sunny;
 }
 
-function chooseBikeIcon(bikes_available) {
+function chooseBikeIcon(bikes_available:number) {
     const url = iconMap.bike;
     const color = bikes_available === 0 ? "#dd2828" : bikes_available>3? "#00c71b":"#e3b707";
     return { url, color };
 }
 
-function chooseDoctorIcon(waiting_days) {
+function chooseDoctorIcon(waiting_days:number) {
     const url = iconMap.doctor;
     const color = waiting_days < 5 ?"#00c71b" : waiting_days<14?"#e3b707" :"#dd2828" ;
     return { url, color };
@@ -103,7 +115,7 @@ function chooseDoctorIcon(waiting_days) {
     return value?.toString();
 }*/
 
-export default function MapMarker({ marker,showPopup = true }) {
+export default function MapMarker({ marker,showPopup = true }:MarkerProps) {
     // Safety checks
     if (!marker || !marker.geometry || !marker.geometry.coordinates || marker.geometry.coordinates.length < 2 || !marker.properties) return null;
 

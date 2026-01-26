@@ -1,6 +1,41 @@
 import React from "react";
 
-export default function MarkerPopup({ properties }) {
+interface DoctorProperties {
+    type: "doctor";
+    provider: string;
+    address: string;
+    locality: string;
+    phone: string;
+    waiting_days: number;
+    service: string;
+}
+
+interface BikeProperties {
+    type: "bike";
+    bikes: number;
+    place?: string;
+    title?: string;
+    name?: string;
+    location?: { name: string };
+}
+
+interface WeatherProperties {
+    type: "weather";
+    temperature: number;
+    humidity: number;
+    pressure: number;
+    aqi?: number;
+    rain_1h?: number;
+    snow_1h?: number;
+}
+
+type MapProperties = DoctorProperties | BikeProperties | WeatherProperties;
+
+interface MarkerPopupProps {
+    properties: MapProperties;
+}
+
+export default function MarkerPopup({ properties }: MarkerPopupProps) {
 
     function renderPopupContent() {
         console.log(properties)
@@ -28,7 +63,7 @@ export default function MarkerPopup({ properties }) {
                     <>
                         <p><strong>Temperatura:</strong> {properties.temperature ?? "N/A"}°C</p>
                         <p><strong>Wilgotność:</strong> {properties.humidity ?? "N/A"}%</p>
-                        <p><strong>Ciśnienie:</strong> {properties.pressure?? "N/A"}</p>
+                        <p><strong>Ciśnienie:</strong> {properties.pressure?? "N/A"} hPa</p>
                         {/*<p><strong>Jakość powietrza (AQI):</strong> {properties.aqi}</p>
                         <p><strong>Opady deszczu:</strong> {properties.rain_1h} mm</p>
                         <p><strong>Opady śniegu:</strong> {properties.snow_1h} mm</p>

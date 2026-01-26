@@ -1,19 +1,24 @@
 import L from "leaflet";
 import {useMap} from "react-leaflet";
 import {useEffect} from "react";
-import {LEGENDS} from "./legendData";
+import {LEGENDS} from "../../data/legendData";
 
+interface MapLegendProps {
+    type: string;
+}
 
-export default function MapLegend({type}){
+export default function MapLegend({type}:MapLegendProps){
     const map = useMap();
 
     useEffect(()=>{
-        const info=L.control({position:"bottomright"})
-        if (!type || !LEGENDS[type]) return;
+        const info=new L.Control({position:"bottomright"})
+        if (!type || !(type in LEGENDS)) return;
+
+        const legendKey = type as keyof typeof LEGENDS;
 
         info.onAdd=function(){
             const div=L.DomUtil.create("div");
-            const { title, items } = LEGENDS[type];
+            const { title, items } = LEGENDS[legendKey];
 
             div.innerHTML = `
                 <div style="
