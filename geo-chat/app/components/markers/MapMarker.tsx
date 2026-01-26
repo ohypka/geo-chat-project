@@ -1,4 +1,4 @@
-import { Marker, Popup } from "react-leaflet";
+import { Marker, Popup,Tooltip } from "react-leaflet";
 import L from "leaflet";
 import MarkerPopup from "./MarkerPopup";
 import { Feature, Point } from "geojson";
@@ -14,6 +14,14 @@ interface MarkerProps {
     showPopup?: boolean;
 }
 
+const tooltipStyles = `
+  .leaflet-tooltip.custom-tooltip {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+  }
+`;
 // Base icons
 const iconMap = {
     doctor: "/doctor.png",
@@ -21,6 +29,7 @@ const iconMap = {
     weather_sunny: "/sunny.png",
     weather_cloudy: "/cloudy.png",
     weather_rain: "/rain.png",
+    weather_snow: "/snow.png",
     weather_humid_hot: "/humid_hot.png", // placeholder for high temp + high humidity
     default: "/doctor.png",
 };
@@ -71,6 +80,8 @@ function chooseWeatherIcon(metrics:any) {
 
     const temp = metrics.temperature ?? 0;
     const humidity = metrics.humidity ?? 0;
+    const rain= metrics.rain_1h ?? 0;
+    const snow= metrics.snow_1h ?? 0;
 
     // Simple thresholds (can be tweaked)
     const lowTemp = temp < 15;
@@ -78,8 +89,9 @@ function chooseWeatherIcon(metrics:any) {
     const lowHumidity = humidity < 60;
     const highHumidity = humidity >= 60;
 
-    if (lowTemp && lowHumidity) return iconMap.weather_cloudy;
-    if (lowTemp && highHumidity) return iconMap.weather_rain;
+    if (snow > 0) return iconMap.weather_snow;
+    if (rain > 0) return iconMap.weather_rain;
+    if (lowTemp) return iconMap.weather_cloudy;
     if (highTemp && lowHumidity) return iconMap.weather_sunny;
     if (highTemp && highHumidity) return iconMap.weather_humid_hot;
 
@@ -121,6 +133,7 @@ export default function MapMarker({ marker,showPopup = true }:MarkerProps) {
 
     const { coordinates } = marker.geometry;
     const properties = marker.properties;
+    const tooltipSize = 35;
 
     // Decide icon
     let icon;
@@ -137,12 +150,32 @@ export default function MapMarker({ marker,showPopup = true }:MarkerProps) {
         icon = createIcon({ url: iconMap.default});
     }
 
-    return (
+    return (<>
+        <style>{tooltipStyles}</style>
         <Marker position={[coordinates[1], coordinates[0]]} icon={icon}>
+            {properties.type === "weather" && properties.temperature != null && (
+                <Tooltip direction="top" offset={[0, -35]} className="custom-tooltip" permanent>
+                    <div style={{
+                        width: `${tooltipSize}px`,
+                        height: `${tooltipSize}px`,
+                        background:"white",
+                        fontSize:"20px",
+                        fontWeight:"bold",
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        border: "1px solid white",
+                        boxShadow: "0 0 6px rgba(0,0,0,0.9)",
+                    }}>
+                        {`${Math.round(properties.temperature)}°`}
+                    </div>
+                </Tooltip>
+            )}
             {showPopup &&
-            <Popup>
-                <MarkerPopup properties={properties}/>
-            </Popup>}
-        </Marker>
+                <Popup>
+                    <MarkerPopup properties={properties}/>
+                </Popup>}
+        </Marker></>
     );
 }
