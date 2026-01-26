@@ -64,10 +64,10 @@ export default function MarkerPopup({ properties }: MarkerPopupProps) {
                         <p><strong>Temperatura:</strong> {properties.temperature ?? "N/A"}°C</p>
                         <p><strong>Wilgotność:</strong> {properties.humidity ?? "N/A"}%</p>
                         <p><strong>Ciśnienie:</strong> {properties.pressure?? "N/A"} hPa</p>
-                        {/*<p><strong>Jakość powietrza (AQI):</strong> {properties.aqi}</p>
+                        <p><strong>Jakość powietrza (AQI):</strong> {properties.aqi}</p>
                         <p><strong>Opady deszczu:</strong> {properties.rain_1h} mm</p>
                         <p><strong>Opady śniegu:</strong> {properties.snow_1h} mm</p>
-                        <p><strong>PM2.5:</strong> {properties.pm25} µg/m³</p>
+                        {/*<p><strong>PM2.5:</strong> {properties.pm25} µg/m³</p>
                         <p><strong>PM10:</strong> {properties.pm10} µg/m³</p>*/}
                     </>
                 );

@@ -26,6 +26,7 @@ class BikesProvider(BaseProvider):
         return resp.json()
 
     def normalize(self, raw_data: Dict[str, Any], location: Location) -> DataPoint:
+        MAX_DISTANCE_KM = 2
         # Pobieramy współrzędne z obiektu location (już po geocodingu)
         user_lat = float(location.lat)
         user_lon = float(location.lon)
@@ -57,6 +58,9 @@ class BikesProvider(BaseProvider):
                 # OBLICZAMY DYSTANS
                 # calculate_distance zwraca metry, więc dzielimy przez 1000, żeby mieć km
                 dist_km = calculate_distance(user_lat, user_lon, s_lat, s_lon) / 1000.0
+
+                if dist_km > MAX_DISTANCE_KM:
+                    continue
 
                 if dist_km < min_distance:
                     min_distance = dist_km

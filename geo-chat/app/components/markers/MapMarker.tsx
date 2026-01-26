@@ -1,7 +1,6 @@
 import { Marker, Popup,Tooltip } from "react-leaflet";
 import L from "leaflet";
 import MarkerPopup from "./MarkerPopup";
-import { Feature, Point } from "geojson";
 
 interface MarkerProps {
     marker: {
@@ -35,7 +34,7 @@ const iconMap = {
 };
 
 // Create Leaflet icon from URL
-function createWeatherIcon(url:string,size:number =35) {
+function createWeatherIcon(url:string,size:number =40) {
     return new L.Icon({
         iconUrl: url,
         iconSize: [size, size],
@@ -46,7 +45,7 @@ function createWeatherIcon(url:string,size:number =35) {
 function createIcon({
     url,
     color = "#1E90FF",
-    size = 35
+    size = 40
 }: { url: string; color?: string; size?: number }) {
     return L.divIcon({
         className: "",
@@ -62,7 +61,7 @@ function createIcon({
                 border:1px solid white;
                 box-shadow:0 0 6px rgba(0,0,0,0.4);
             ">
-                <img src="${url}" style="
+                <img src="${url}" alt="weather icon" style="
                     width:${size * 0.7}px;
                     height:${size * 0.7}px;
                 "/>
@@ -133,7 +132,7 @@ export default function MapMarker({ marker,showPopup = true }:MarkerProps) {
 
     const { coordinates } = marker.geometry;
     const properties = marker.properties;
-    const tooltipSize = 35;
+    const tooltipSize = 40;
 
     // Decide icon
     let icon;
@@ -154,7 +153,7 @@ export default function MapMarker({ marker,showPopup = true }:MarkerProps) {
         <style>{tooltipStyles}</style>
         <Marker position={[coordinates[1], coordinates[0]]} icon={icon}>
             {properties.type === "weather" && properties.temperature != null && (
-                <Tooltip direction="top" offset={[0, -35]} className="custom-tooltip" permanent>
+                <Tooltip direction="top" offset={[0, -tooltipSize]} className="custom-tooltip" permanent>
                     <div style={{
                         width: `${tooltipSize}px`,
                         height: `${tooltipSize}px`,
