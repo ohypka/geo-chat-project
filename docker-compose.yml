@@ -1,0 +1,25 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: ./geo_chat/Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      PYTHONPATH: /app
+      PYTHONUNBUFFERED: "1"
+      OPENWEATHER_API_KEY: klucz_tutaj
+      TOMTOM_API_KEY: klucz_tutaj
+
+  frontend:
+    build:
+      context: ./geo-chat
+    platform: linux/amd64
+    ports:
+      - "3001:3000"
+    environment:
+      NODE_ENV: development
+    depends_on:
+      - backend
