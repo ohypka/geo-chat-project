@@ -12,13 +12,14 @@ services:
       PYTHONUNBUFFERED: "1"
       OPENWEATHER_API_KEY: klucz_tutaj
       TOMTOM_API_KEY: klucz_tutaj
+      GOOGLE_API_KEY: klucz_tutaj
 
   frontend:
     build:
       context: ./geo-chat
     platform: linux/amd64
     ports:
-      - "3001:3000"
+      - "3000:3000"
     environment:
       NODE_ENV: development
     depends_on:
